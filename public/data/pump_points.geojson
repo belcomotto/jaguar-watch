@@ -1,0 +1,250 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "toma 2",
+        "Provincia": "Chaco",
+        "Tipo": "tomas pequeñas",
+        "Etiqueta": null,
+        "_pto_muestr": "toma de agua"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -61.610062599999935,
+          -24.44607269999995
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_OID_": 0,
+        "Name": "toma de agua Fortín Belgrano",
+        "_FolderPath": "toma de agua Fortín Belgrano",
+        "Provincia": null,
+        "Tipo": "tomas de pueblos y parajes",
+        "Etiqueta": "Toma Fortín Belgrano",
+        "_pto_muestr": "toma de agua"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -62.34246559999991,
+          -24.110932499999937
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_OID_": 0,
+        "Name": "toma de agua Ing. Juárez",
+        "_FolderPath": "toma de agua ING Juárez",
+        "Provincia": "Formosa",
+        "Tipo": "tomas grandes",
+        "Etiqueta": "Toma Ing. Juárez",
+        "_pto_muestr": "toma de agua"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -62.22662689999993,
+          -24.13696919999995
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_OID_": 0,
+        "Name": "toma de agua Tartagal",
+        "_FolderPath": "toma de agua Tartagal",
+        "Provincia": "Chaco",
+        "Tipo": "tomas de pueblos y parajes",
+        "Etiqueta": "Toma Tartagal",
+        "_pto_muestr": "toma de agua"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -62.13970829999993,
+          -24.22122079999991
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_OID_": 0,
+        "Name": "toma de agua Wichí Pintado",
+        "_FolderPath": "toma de wichí pintado",
+        "Provincia": "Chaco",
+        "Tipo": "tomas de pueblos y parajes",
+        "Etiqueta": "Toma Wichí Pintado",
+        "_pto_muestr": "toma de agua"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -61.424588499999906,
+          -24.61906249999993
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_OID_": 0,
+        "Name": "toma 3",
+        "_FolderPath": "toma",
+        "Provincia": "Formosa",
+        "Tipo": "tomas pequeñas",
+        "Etiqueta": null,
+        "_pto_muestr": "toma de agua"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -61.60120489999997,
+          -24.43669219999997
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_OID_": 0,
+        "Name": "toma 5",
+        "_FolderPath": "toma",
+        "Provincia": "Chaco",
+        "Tipo": "tomas pequeñas",
+        "Etiqueta": null,
+        "_pto_muestr": "toma de agua"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -61.58935679999997,
+          -24.488600899999934
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_OID_": 0,
+        "Name": "toma grande Laguna Yema",
+        "_FolderPath": "toma grande yema",
+        "Provincia": "Formosa",
+        "Tipo": "tomas grandes",
+        "Etiqueta": "Toma Laguna Yema",
+        "_pto_muestr": "toma de agua"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -61.687704099999955,
+          -24.36709239999994
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_OID_": 0,
+        "Name": "toma Sauzalito",
+        "_FolderPath": "toma Sauzalito",
+        "Provincia": "Chaco",
+        "Tipo": "tomas de pueblos y parajes",
+        "Etiqueta": "Toma Sauzalito",
+        "_pto_muestr": "toma de agua"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -61.69112111299995,
+          -24.41560265299996
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_OID_": 0,
+        "Name": "toma Sumayen",
+        "_FolderPath": "toma Sumayen",
+        "Provincia": "Formosa",
+        "Tipo": "tomas de pueblos y parajes",
+        "Etiqueta": "Toma Sumayen",
+        "_pto_muestr": "toma de agua"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -61.58344609999995,
+          -24.460207299999976
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_OID_": 0,
+        "Name": "toma",
+        "_FolderPath": "toma",
+        "Provincia": "Chaco",
+        "Tipo": "tomas pequeñas",
+        "Etiqueta": null,
+        "_pto_muestr": "toma de agua"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -61.70146759999994,
+          -24.407747299999983
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_OID_": 0,
+        "Name": "tomita",
+        "_FolderPath": "tomita",
+        "Provincia": "Chaco",
+        "Tipo": "tomas pequeñas",
+        "Etiqueta": null,
+        "_pto_muestr": "toma de agua"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -61.71370019999995,
+          -24.386665699999984
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_OID_": 0,
+        "Name": "toma Tres Pozos",
+        "_FolderPath": "24°18'47.26''S 61°51'51.48''W",
+        "Provincia": "Chaco",
+        "Tipo": "tomas de pueblos y parajes",
+        "Etiqueta": "Toma Tres Pozos",
+        "_pto_muestr": "toma de agua"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -61.86429999999996,
+          -24.313127799999968
+        ]
+      }
+    }
+  ]
+}

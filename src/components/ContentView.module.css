@@ -1,0 +1,202 @@
+.view {
+  position: fixed;
+  top: 116px;
+  left: 20px;
+  width: calc(50vw - 20px);
+  bottom: 20px;
+  background: var(--panel-bg);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  border-radius: 6px;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.12);
+  overflow: hidden;
+}
+
+.scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 40px 52px 64px 48px;
+}
+
+/* Header */
+.viewHeader {
+  margin-bottom: 56px;
+  border-bottom: 1px solid var(--panel-border);
+  padding-bottom: 32px;
+}
+
+.viewTitle {
+  font-size: 28px;
+  letter-spacing: 0.18em;
+  color: var(--sand);
+  margin-bottom: 16px;
+  text-transform: uppercase;
+}
+
+.viewLead {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--sand-dim);
+  font-style: italic;
+}
+
+/* Timeline (History) */
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.timelineItem {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 24px;
+  padding: 28px 0;
+  border-bottom: 1px solid rgba(99, 65, 47, 0.2);
+}
+
+.timelineYear {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--green);
+  font-family: 'Icone Pro', 'IM Fell Double Pica', serif;
+  padding-top: 4px;
+  text-align: right;
+}
+
+.timelineContent {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Section titles (shared) */
+.sectionTitle {
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--green);
+  font-family: 'Icone Pro', 'IM Fell Double Pica', serif;
+}
+
+.sectionBody {
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--sand-dim);
+}
+
+/* Law cards (Legislation) */
+.lawGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  margin-bottom: 48px;
+}
+
+.lawCard {
+  padding: 24px;
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.01);
+}
+
+.lawMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.lawCode {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--green);
+  font-family: 'Icone Pro', 'IM Fell Double Pica', serif;
+}
+
+.lawYear {
+  font-size: 11px;
+  color: var(--sand-dim);
+}
+
+.lawTitle {
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sand);
+  font-family: 'Icone Pro', 'IM Fell Double Pica', serif;
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+.lawBody {
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--sand-dim);
+  margin-bottom: 16px;
+}
+
+.lawStatus {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lawStatusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.lawStatusText {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sand-dim);
+}
+
+.legalNote {
+  padding: 28px;
+  border: 1px solid rgba(60, 69, 37, 0.25);
+  background: rgba(60, 69, 37, 0.05);
+  border-radius: 4px;
+  margin-bottom: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Footer */
+.viewFooter {
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 1px solid var(--panel-border);
+  font-size: 12px;
+  color: var(--sand-dim);
+  font-style: italic;
+  line-height: 1.6;
+}
+
+.viewFooter a {
+  color: #7ab84e;
+  text-decoration: none;
+}
+.viewFooter a:hover { text-decoration: underline; }
+
+/* Flood Hub */
+.floodHeader {
+  padding: 28px 32px 20px;
+  border-bottom: 1px solid var(--panel-border);
+  flex-shrink: 0;
+}
+
+.floodFrame {
+  flex: 1;
+  width: 100%;
+  border: none;
+  display: block;
+}

@@ -1,0 +1,13 @@
+/* App-level styles */
+.pump-popup .mapboxgl-popup-content {
+  background: rgba(10, 10, 10, 0.95);
+  border: 1px solid rgba(99, 65, 47, 0.4);
+  border-radius: 4px;
+  padding: 0;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+  color: #DED8CF;
+}
+
+.pump-popup .mapboxgl-popup-tip {
+  border-top-color: rgba(99, 65, 47, 0.4);
+}

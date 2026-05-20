@@ -1,0 +1,326 @@
+/* Floating layer panel card (DISCOVER tab) */
+.sidebar {
+  position: fixed;
+  top: 122px;
+  left: 24px;
+  width: 356px;
+  max-height: calc(100vh - 146px);
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 28px rgba(0,0,0,0.10);
+  overflow: hidden;
+}
+
+/* Layer panel */
+.layerPanel {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.panelScroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0 24px;
+}
+
+.layerGroup {
+  padding: 16px 24px 8px;
+  border-bottom: 1px solid rgba(99, 65, 47, 0.15);
+}
+
+.groupHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.groupLabel {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--green);
+  font-family: 'Icone Pro', 'IM Fell Double Pica', serif;
+}
+
+.groupSub {
+  font-size: 10px;
+  color: var(--sand-dim);
+  font-style: italic;
+  letter-spacing: 0;
+  text-transform: none;
+  font-family: 'IM Fell Double Pica', serif;
+}
+
+/* Layer row */
+.layerRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 10px 7px 6px;
+  border-radius: 4px;
+  text-align: left;
+  transition: background 0.12s;
+  margin: 0;
+}
+
+.layerRow:hover,
+.layerRowGsw:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.layerActive {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.layerSwatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border-width: 2px;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.layerLabel {
+  flex: 1;
+  font-size: 13px;
+  color: var(--sand-dim);
+  transition: color 0.12s;
+}
+
+.layerActive .layerLabel {
+  color: var(--sand);
+}
+
+.layerDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.layerDotOn {
+  background: var(--sand-dim);
+  border-color: var(--sand-dim);
+}
+
+/* GSW expandable rows */
+.gswBlock {
+  margin: 1px 0;
+}
+
+.layerToggleArea {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  padding: 7px 6px;
+  text-align: left;
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.infoBtn {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  color: var(--sand-dim);
+  border-radius: 3px;
+  transition: color 0.12s, background 0.12s;
+  margin-right: 6px;
+}
+
+.infoBtn:hover,
+.infoBtnOpen {
+  color: var(--sand);
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.gswInfo {
+  margin: 0 8px 8px 30px;
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.02);
+  border-left: 2px solid var(--panel-border);
+  border-radius: 0 4px 4px 0;
+}
+
+.gswDesc {
+  font-size: 12px;
+  color: var(--sand-dim);
+  line-height: 1.6;
+  font-style: italic;
+  margin-bottom: 10px;
+}
+
+.gswLegend {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.gswLegendRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gswSwatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.gswLegendLabel {
+  font-size: 11px;
+  color: var(--sand-dim);
+}
+
+/* Sentinel panel */
+.sentinelPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sentinelHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sentinelToggle {
+  padding: 5px 14px;
+  border-radius: 3px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 1px solid var(--panel-border);
+  color: var(--sand-dim);
+  background: transparent;
+  transition: all 0.15s;
+  cursor: pointer;
+}
+.sentinelToggle:disabled { opacity: 0.4; cursor: default; }
+.sentinelToggleOn {
+  background: var(--green) !important;
+  border-color: var(--green) !important;
+  color: #faf9f7 !important;
+}
+
+.sentinelStatus {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--sand-dim);
+}
+
+/* Band selector */
+.bandGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.bandBtn {
+  padding: 4px 10px;
+  border-radius: 3px;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  border: 1px solid rgba(99, 65, 47, 0.35);
+  color: var(--sand-dim);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.12s;
+  white-space: nowrap;
+}
+.bandBtn:hover { color: var(--sand); border-color: var(--panel-border); }
+.bandBtn:disabled { opacity: 0.35; cursor: default; }
+.bandBtnActive {
+  background: var(--brown) !important;
+  border-color: var(--brown) !important;
+  color: #faf9f7 !important;
+}
+
+/* Time slider */
+.timeSlider {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.timeLabel {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.timeLabelDate {
+  font-size: 14px;
+  color: var(--sand);
+  font-style: italic;
+}
+
+.timeLabelSub {
+  font-size: 10px;
+  color: var(--sand-dim);
+  letter-spacing: 0.04em;
+}
+
+.timeRange {
+  width: 100%;
+}
+
+.timeEndLabels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--sand-dim);
+  letter-spacing: 0.04em;
+}
+
+/* Legend */
+.legend {
+  padding: 20px 24px;
+}
+
+.legendTitle {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--green);
+  margin-bottom: 8px;
+  font-family: 'Icone Pro', 'IM Fell Double Pica', serif;
+}
+
+.legendText {
+  font-size: 12px;
+  color: var(--sand-dim);
+  line-height: 1.65;
+}
+
+.legendDivider {
+  height: 1px;
+  background: var(--panel-border);
+  margin: 14px 0;
+}
