@@ -48,12 +48,11 @@ export function useFirmsData() {
   const [fetchedAt, setFetchedAt] = useState(null);
 
   useEffect(() => {
-    const key = import.meta.env.VITE_FIRMS_KEY;
-
     // Fetch all three VIIRS products in parallel, merge results
+    // Key is injected server-side by /api/firms (Vercel function) or the Vite dev proxy
     Promise.allSettled(
       PRODUCTS.map(product =>
-        fetch(`/firms-api/api/area/csv/${key}/${product}/${BBOX}/${DAYS}`)
+        fetch(`/api/firms?product=${product}&bbox=${encodeURIComponent(BBOX)}&days=${DAYS}`)
           .then(r => {
             if (!r.ok) throw new Error(`HTTP ${r.status}`);
             return r.text();
