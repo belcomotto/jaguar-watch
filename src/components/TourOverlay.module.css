@@ -1,0 +1,165 @@
+/* Mirrors Sidebar geometry: top: 122px, right side, same card style */
+.card {
+  position: fixed;
+  top: 122px;
+  right: 24px;
+  width: 356px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  padding: 18px 24px 22px;
+  box-shadow: 0 4px 28px rgba(0, 0, 0, 0.10);
+  z-index: 15;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.35s ease, transform 0.35s ease; /* 350ms matches JS timeout */
+  pointer-events: none;
+}
+
+.card.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.back {
+  font-family: 'Icone Pro', 'IM Fell Double Pica', serif;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sand-dim);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s;
+}
+
+.back:hover {
+  color: var(--sand);
+}
+
+.eyebrow {
+  font-family: 'Icone Pro', 'IM Fell Double Pica', serif;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--green);
+}
+
+/* h3 inherits Icone Pro + uppercase from global CSS */
+.title {
+  font-size: 16px;
+  color: var(--sand);
+  margin: 0 0 4px;
+  letter-spacing: 0.12em;
+}
+
+.subtitle {
+  font-family: 'IM Fell Double Pica', serif;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--sand-dim);
+  margin: 0 0 10px;
+}
+
+.body {
+  font-family: 'IM Fell Double Pica', serif;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--sand);
+}
+
+.skip {
+  font-family: 'Icone Pro', 'IM Fell Double Pica', serif;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sand-dim);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s;
+}
+
+.skip:hover {
+  color: var(--sand);
+}
+
+/* ── Fire stats block ────────────────────────────────────────────────── */
+.statsBlock {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--panel-border);
+}
+
+.statTotal {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.statNum {
+  font-family: 'Icone Pro', 'IM Fell Double Pica', serif;
+  font-size: 28px;
+  color: var(--sand);
+  line-height: 1;
+}
+
+.statLbl {
+  font-family: 'IM Fell Double Pica', serif;
+  font-size: 11px;
+  color: var(--sand-dim);
+}
+
+.confRow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.confVal {
+  font-family: 'Icone Pro', 'IM Fell Double Pica', serif;
+  font-size: 13px;
+  color: var(--sand);
+}
+
+.confLbl {
+  font-family: 'IM Fell Double Pica', serif;
+  font-size: 11px;
+  color: var(--sand-dim);
+  margin-right: 6px;
+}
+
+.statMeta {
+  font-family: 'IM Fell Double Pica', serif;
+  font-size: 10px;
+  color: var(--sand-dim);
+  font-style: italic;
+}

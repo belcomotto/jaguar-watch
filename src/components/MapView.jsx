@@ -20,6 +20,15 @@ const IMAGE_COORDS = [
   [GSW_BOUNDS[0], GSW_BOUNDS[1]],
 ];
 
+// MapBiomas image overlay — full Gran Chaco raster extent (nodata=0 → transparent)
+// Bounds from rasterio: left=-67.7256, bottom=-33.8736, right=-55.7565, top=-17.5360
+const MAPBIOMAS_COORDS = [
+  [-67.72560623728215, -17.536012661297182],  // NW
+  [-55.75654322320206, -17.536012661297182],  // NE
+  [-55.75654322320206, -33.87358290205051 ],  // SE
+  [-67.72560623728215, -33.87358290205051 ],  // SW
+];
+
 // Landing position — matches the 3D perspective in the reference screenshot
 const LANDING = { center: [-61.35, -25.1], zoom: 9.5, pitch: 55, bearing: 5 };
 
@@ -46,8 +55,15 @@ function adjacentMonths(months, currentIdx, radius = 4) {
   return result;
 }
 
-export default function MapView({ layers, mapRef, sentinel, months }) {
+const FIRMS_CONF_COLOR = ['match', ['get', 'confidence'],
+  'h', '#ff2200', 'high', '#ff2200',
+  'n', '#ff8800', 'nominal', '#ff8800',
+  '#ffcc00',
+];
+
+export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON, mapbiomas, onIntroComplete }) {
   const containerRef = useRef(null);
+  const onIntroCompleteRef = useRef(onIntroComplete);
 
   useEffect(() => {
     const skipIntro = introPlayed;
@@ -78,6 +94,18 @@ export default function MapView({ layers, mapRef, sentinel, months }) {
         'star-intensity': 0.5,
       });
 
+      // ── MapBiomas land-cover overlay ─────────────────────────────────────
+      const BLANK = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQI12NgAAIABQAABjkB6QAAAABJRU5ErkJggg==';
+      map.addSource('mapbiomas', { type: 'image', url: BLANK, coordinates: MAPBIOMAS_COORDS });
+      map.addLayer({
+        id: 'mapbiomas-layer',
+        type: 'raster',
+        source: 'mapbiomas',
+        // fade-duration 0  → instant swap, no blank frame between years
+        // resampling nearest → crisp class boundaries (no bilinear blurring)
+        paint: { 'raster-opacity': 0, 'raster-fade-duration': 0, 'raster-resampling': 'nearest' },
+      });
+
       // ── Sentinel image source ─────────────────────────────────────────────
       map.addSource('sentinel', {
         type: 'image',
@@ -91,29 +119,35 @@ export default function MapView({ layers, mapRef, sentinel, months }) {
         paint: { 'raster-opacity': 0, 'raster-fade-duration': 400 },
       });
 
-      // ── Park boundary — white solid ───────────────────────────────────────
+      // ── Park boundary — white solid (hidden until tour/explore activates) ──
       map.addSource('park', { type: 'geojson', data: '/data/park_boundary.geojson' });
       map.addLayer({ id: 'park-fill', type: 'fill', source: 'park',
-        paint: { 'fill-color': '#ffffff', 'fill-opacity': 0.08 } });
+        paint: { 'fill-color': '#ffffff', 'fill-opacity': 0.08 },
+        layout: { visibility: 'none' } });
       map.addLayer({ id: 'park-line', type: 'line', source: 'park',
-        paint: { 'line-color': '#ffffff', 'line-width': 2, 'line-opacity': 0.9 } });
+        paint: { 'line-color': '#ffffff', 'line-width': 2, 'line-opacity': 0.9 },
+        layout: { visibility: 'none' } });
 
-      // ── Buffer — white dashed ─────────────────────────────────────────────
+      // ── Buffer — white dashed (hidden until activated) ────────────────────
       map.addSource('buffer', { type: 'geojson', data: '/data/buffer_area.geojson' });
       map.addLayer({ id: 'buffer-fill', type: 'fill', source: 'buffer',
-        paint: { 'fill-color': '#ffffff', 'fill-opacity': 0.04 } });
+        paint: { 'fill-color': '#ffffff', 'fill-opacity': 0.04 },
+        layout: { visibility: 'none' } });
       map.addLayer({ id: 'buffer-line', type: 'line', source: 'buffer',
         paint: { 'line-color': '#ffffff', 'line-width': 1.5, 'line-opacity': 0.7,
-                 'line-dasharray': [5, 4] } });
+                 'line-dasharray': [5, 4] },
+        layout: { visibility: 'none' } });
 
-      // ── Pump points ───────────────────────────────────────────────────────
+      // ── Pump points (hidden until activated) ─────────────────────────────
       map.addSource('pumps', { type: 'geojson', data: '/data/pump_points.geojson' });
       map.addLayer({ id: 'pumps-halo', type: 'circle', source: 'pumps',
         paint: { 'circle-radius': 16, 'circle-color': '#63412F',
-                 'circle-opacity': 0.22, 'circle-stroke-width': 0 } });
+                 'circle-opacity': 0.22, 'circle-stroke-width': 0 },
+        layout: { visibility: 'none' } });
       map.addLayer({ id: 'pumps-dot', type: 'circle', source: 'pumps',
         paint: { 'circle-radius': 6, 'circle-color': '#63412F', 'circle-opacity': 1,
-                 'circle-stroke-width': 1.5, 'circle-stroke-color': '#DED8CF' } });
+                 'circle-stroke-width': 1.5, 'circle-stroke-color': '#DED8CF' },
+        layout: { visibility: 'none' } });
 
       map.on('click', 'pumps-dot', (e) => {
         const props = e.features[0].properties;
@@ -207,9 +241,87 @@ export default function MapView({ layers, mapRef, sentinel, months }) {
       map.on('mouseenter', 'flood-dot', () => { map.getCanvas().style.cursor = 'pointer'; });
       map.on('mouseleave', 'flood-dot', () => { map.getCanvas().style.cursor = ''; });
 
+      // ── FIRMS fire alerts ─────────────────────────────────────────────────
+      map.addSource('firms', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] },
+      });
+      map.addLayer({
+        id: 'firms-halo',
+        type: 'circle',
+        source: 'firms',
+        paint: {
+          'circle-radius': 14,
+          'circle-color': FIRMS_CONF_COLOR,
+          'circle-opacity': 0.18,
+          'circle-stroke-width': 0,
+        },
+        layout: { visibility: 'none' },
+      });
+      map.addLayer({
+        id: 'firms-dot',
+        type: 'circle',
+        source: 'firms',
+        paint: {
+          'circle-radius': 5,
+          'circle-color': FIRMS_CONF_COLOR,
+          'circle-opacity': 1,
+          'circle-stroke-width': 1,
+          'circle-stroke-color': 'rgba(255,255,255,0.6)',
+        },
+        layout: { visibility: 'none' },
+      });
+      map.on('click', 'firms-dot', (e) => {
+        const p = e.features[0].properties;
+        const confLabel = { h: 'High', high: 'High', n: 'Nominal', nominal: 'Nominal', l: 'Low', low: 'Low' }[p.confidence] ?? p.confidence;
+        new mapboxgl.Popup({ className: 'pump-popup', closeButton: false })
+          .setLngLat(e.lngLat)
+          .setHTML(`<div style="font-family:'IM Fell Double Pica',serif;padding:8px 12px;min-width:180px">
+            <h4 style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#ff4400;margin-bottom:6px">Active Fire Detection</h4>
+            <p style="font-size:13px;margin:2px 0"><span style="color:#888">Date:</span> ${p.acq_date} ${p.acq_time?.slice(0,2)}:${p.acq_time?.slice(2,4)} UTC</p>
+            <p style="font-size:13px;margin:2px 0"><span style="color:#888">Confidence:</span> ${confLabel}</p>
+            <p style="font-size:13px;margin:2px 0"><span style="color:#888">Fire power:</span> ${p.frp ? p.frp.toFixed(1) + ' MW' : '—'}</p>
+            <p style="font-size:13px;margin:2px 0"><span style="color:#888">Time of day:</span> ${p.daynight === 'D' ? 'Day' : 'Night'}</p>
+            <p style="font-size:10px;color:#555;margin-top:6px;font-style:italic">NASA FIRMS · VIIRS S-NPP + NOAA-20 + NOAA-21 · ~3h latency</p>
+          </div>`)
+          .addTo(map);
+      });
+      map.on('mouseenter', 'firms-dot', () => { map.getCanvas().style.cursor = 'pointer'; });
+      map.on('mouseleave', 'firms-dot', () => { map.getCanvas().style.cursor = ''; });
+
       // ── Globe intro dive ──────────────────────────────────────────────────
+      // ── Tour pump highlight source + layers (start empty) ────────────────
+      map.addSource('tour-pumps', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] },
+      });
+      map.addLayer({
+        id: 'tour-pumps-glow',
+        type: 'circle',
+        source: 'tour-pumps',
+        paint: {
+          'circle-radius': 22,
+          'circle-color': '#f4a261',
+          'circle-opacity': 0.28,
+          'circle-stroke-width': 0,
+        },
+      });
+      map.addLayer({
+        id: 'tour-pumps-dot',
+        type: 'circle',
+        source: 'tour-pumps',
+        paint: {
+          'circle-radius': 7,
+          'circle-color': '#f4a261',
+          'circle-opacity': 1,
+          'circle-stroke-width': 1.5,
+          'circle-stroke-color': '#fff8f0',
+        },
+      });
+
       if (skipIntro) {
         map.setMinZoom(6);
+        onIntroCompleteRef.current?.();
       } else {
         setTimeout(() => {
           map.flyTo({
@@ -220,6 +332,7 @@ export default function MapView({ layers, mapRef, sentinel, months }) {
           map.once('moveend', () => {
             map.setMinZoom(6);
             introPlayed = true;
+            onIntroCompleteRef.current?.();
           });
         }, 1800);
       }
@@ -287,7 +400,7 @@ export default function MapView({ layers, mapRef, sentinel, months }) {
     });
 
     return () => map.remove();
-  }, []);
+  }, [mapRef]);
 
   // Sync GSW / park / pump layer visibility
   useEffect(() => {
@@ -307,6 +420,8 @@ export default function MapView({ layers, mapRef, sentinel, months }) {
     for (const id of Object.keys(GSW_LAYERS)) toggle(`${id}-layer`, layers[id]);
     toggle('flood-halo', layers.floodGauges);
     toggle('flood-dot',  layers.floodGauges);
+    toggle('firms-halo', layers.firms);
+    toggle('firms-dot',  layers.firms);
   }, [layers]);
 
   // Load flood gauge data when layer is enabled
@@ -317,6 +432,14 @@ export default function MapView({ layers, mapRef, sentinel, months }) {
     if (!src) return;
     src.setData(toGeoJSON(GAUGES));
   }, [layers.floodGauges]);
+
+  // Push FIRMS data into the map source whenever it loads
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !firmsGeoJSON) return;
+    const src = map.getSource('firms');
+    if (src) src.setData(firmsGeoJSON);
+  }, [firmsGeoJSON, mapRef]);
 
   // Sync Sentinel layer visibility + image
   useEffect(() => {
@@ -343,6 +466,32 @@ export default function MapView({ layers, mapRef, sentinel, months }) {
     src.updateImage({ url, coordinates: IMAGE_COORDS });
     map.setPaintProperty('sentinel-layer', 'raster-opacity', 0.92);
   }, [sentinel.enabled, sentinel.band, sentinel.date, months]);
+
+  // Sync MapBiomas layer — instant swap (fade-duration 0) + preload neighbours
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.isStyleLoaded()) return;
+    const src = map.getSource('mapbiomas');
+    if (!src) return;
+
+    if (!mapbiomas?.enabled) {
+      map.setPaintProperty('mapbiomas-layer', 'raster-opacity', 0);
+      return;
+    }
+
+    const year = mapbiomas.year;
+    const url = `/data/mapbiomas/mapbiomas_${year}.png`;
+    src.updateImage({ url, coordinates: MAPBIOMAS_COORDS });
+    map.setPaintProperty('mapbiomas-layer', 'raster-opacity', 0.85);
+
+    // Preload the next 3 and previous 1 years so browser cache is warm
+    for (const y of [year + 1, year + 2, year + 3, year - 1]) {
+      if (y >= 1985 && y <= 2023) {
+        const img = new window.Image();
+        img.src = `/data/mapbiomas/mapbiomas_${y}.png`;
+      }
+    }
+  }, [mapbiomas?.enabled, mapbiomas?.year, mapRef]);
 
   return <div ref={containerRef} style={{ position: 'absolute', inset: 0 }} />;
 }

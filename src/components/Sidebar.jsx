@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import styles from './Sidebar.module.css';
 import { STATUS_COLORS, STATUS_LABELS } from '../data/floodGauges';
+import MapBiomasPanel from './MapBiomasPanel';
 
 const SENTINEL_BANDS = [
   { id: 'true-color',           label: 'True Color' },
@@ -31,7 +32,15 @@ function formatDateLabel(dateStr) {
   });
 }
 
-const GSW_INFO = {
+const LAYER_INFO = {
+  firms: {
+    description: 'Near real-time fire detections from NASA\'s VIIRS sensor aboard Suomi-NPP. Each point marks a 375 m pixel with a confirmed thermal anomaly consistent with active fire. Data is updated approximately every 3 hours.',
+    legend: [
+      { color: '#ff2200', label: 'High confidence' },
+      { color: '#ff8800', label: 'Nominal confidence' },
+      { color: '#ffcc00', label: 'Low confidence' },
+    ],
+  },
   gsw_seasonality: {
     description: 'Shows how many months per year surface water was present, averaged from 1984 to 2021. Values range from 1 (water appears one month per year) to 12 (permanent water present all year round).',
     legend: [
@@ -65,6 +74,9 @@ const GSW_INFO = {
   },
 };
 
+// Legacy alias — GSW_INFO kept as reference for existing code
+const GSW_INFO = LAYER_INFO;
+
 const LAYER_GROUPS = [
   {
     label: 'Protected Areas',
@@ -77,6 +89,13 @@ const LAYER_GROUPS = [
     label: 'Illegal Extraction',
     layers: [
       { id: 'pumps', label: 'Illegal Pump Sites', color: '#63412F', desc: '13 documented sites on the Bermejo' },
+    ],
+  },
+  {
+    label: 'Fire Monitoring',
+    sublabel: 'NASA FIRMS · VIIRS S-NPP · 5 days',
+    layers: [
+      { id: 'firms', label: 'Active Fire Alerts', color: '#ff4400', gsw: true },
     ],
   },
   {
@@ -192,7 +211,7 @@ function SentinelPanel({ sentinel, setSentinel }) {
   );
 }
 
-export default function Sidebar({ layers, setLayers, sentinel, setSentinel }) {
+export default function Sidebar({ layers, setLayers, sentinel, setSentinel, mapbiomas, setMapbiomas }) {
   const toggleLayer = (id) => setLayers(prev => ({ ...prev, [id]: !prev[id] }));
 
   return (
@@ -241,6 +260,14 @@ export default function Sidebar({ layers, setLayers, sentinel, setSentinel }) {
               ))}
             </div>
           )}
+        </div>
+
+        <div className={styles.layerGroup}>
+          <div className={styles.groupHeader}>
+            <span className={styles.groupLabel}>Land Cover</span>
+            <span className={styles.groupSub}>MapBiomas · Gran Chaco</span>
+          </div>
+          <MapBiomasPanel mapbiomas={mapbiomas} setMapbiomas={setMapbiomas} />
         </div>
 
         <div className={styles.layerGroup}>

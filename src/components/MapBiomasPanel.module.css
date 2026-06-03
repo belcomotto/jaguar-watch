@@ -1,0 +1,150 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toggleBtn {
+  padding: 5px 14px;
+  border-radius: 3px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 1px solid var(--panel-border);
+  color: var(--sand-dim);
+  background: transparent;
+  transition: all 0.15s;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-family: 'Icone Pro', 'IM Fell Double Pica', serif;
+}
+
+.toggleOn {
+  background: var(--green) !important;
+  border-color: var(--green) !important;
+  color: #faf9f7 !important;
+}
+
+.status {
+  font-size: 11px;
+  color: var(--sand-dim);
+  font-family: 'IM Fell Double Pica', serif;
+  font-style: italic;
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: opacity 0.2s;
+}
+
+.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.yearRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.yearNum {
+  font-size: 28px;
+  font-family: 'Icone Pro', 'IM Fell Double Pica', serif;
+  color: var(--sand);
+  line-height: 1;
+  letter-spacing: 0.05em;
+}
+
+.playBtn {
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 3px;
+  border: 1px solid var(--panel-border);
+  color: var(--sand-dim);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.playBtn:hover { color: var(--sand); }
+.playBtn:disabled { opacity: 0.4; cursor: default; }
+
+.playBtnActive {
+  background: var(--brown) !important;
+  border-color: var(--brown) !important;
+  color: #faf9f7 !important;
+}
+
+.slider {
+  width: 100%;
+}
+
+.endLabels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--sand-dim);
+  letter-spacing: 0.04em;
+  font-family: 'IM Fell Double Pica', serif;
+}
+
+/* Legend */
+.legendToggle {
+  font-family: 'Icone Pro', 'IM Fell Double Pica', serif;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sand-dim);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+  transition: color 0.12s;
+}
+
+.legendToggle:hover { color: var(--sand); }
+
+.legendGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 0 2px;
+}
+
+.legendRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  border: 1px solid rgba(0,0,0,0.08);
+}
+
+.legendLabel {
+  font-size: 11px;
+  color: var(--sand-dim);
+  font-family: 'IM Fell Double Pica', serif;
+}
+
+.legendSource {
+  font-size: 10px;
+  color: var(--sand-dim);
+  font-style: italic;
+  margin-top: 6px;
+  font-family: 'IM Fell Double Pica', serif;
+}

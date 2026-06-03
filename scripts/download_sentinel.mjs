@@ -25,6 +25,13 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUTPUT_DIR = join(__dirname, '..', 'public', 'sentinel');
 
 const FORCE = process.argv.includes('--force');
+const ONLY_MONTH = process.argv.find(a => /^\d{4}-\d{2}$/.test(a)) || null;
+const ONLY_YEARS = (() => {
+  const arg = process.argv.find(a => a.startsWith('--years='));
+  return arg ? arg.replace('--years=', '').split(',').map(Number) : null;
+})();
+
+let creditsExhausted = false;
 
 const TOKEN_URL   = 'https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token';
 const PROCESS_URL = 'https://sh.dataspace.copernicus.eu/api/v1/process';
@@ -115,12 +122,14 @@ function evaluatePixel(samples){
 }
 
 function ndwiScript() {
+  // NDWI = (B03 - B08) / (B03 + B08)  — McFeeters 1996
+  // Color ramp matches EO Browser standard: tan (dry land) → pale green (veg) → cyan → deep blue (water)
   return `//VERSION=3
 function setup(){return{input:[{bands:["B03","B08","SCL","dataMask"]}],output:{bands:4},mosaicking:"ORBIT"};}
 ${FILTER_SCENES}
 function evaluatePixel(samples){
   var CLEAR={4:1,5:1,6:1,7:1,11:1};
-  function px(s){var v=(s.B03-s.B08)/(s.B03+s.B08+1e-6);var r=colorBlend(v,[-1,-0.3,0,0.1,0.3,1],[[0.4,0.2,0.05],[0.75,0.55,0.2],[0.95,0.95,0.7],[0.35,0.75,1],[0.05,0.35,0.95],[0,0.1,0.7]]);return[r[0],r[1],r[2],1];}
+  function px(s){var v=(s.B03-s.B08)/(s.B03+s.B08+1e-6);var r=colorBlend(v,[-1,-0.5,-0.1,0,0.1,0.3,0.5,1],[[0.0,0.30,0.0],[0.10,0.50,0.10],[0.40,0.75,0.40],[0.82,0.95,0.82],[0.70,0.90,0.95],[0.25,0.60,0.90],[0.05,0.25,0.80],[0.00,0.05,0.55]]);return[r[0],r[1],r[2],1];}
   for(var i=0;i<samples.length;i++){if(samples[i].dataMask&&CLEAR[samples[i].SCL])return px(samples[i]);}
   for(var i=0;i<samples.length;i++){if(samples[i].dataMask)return px(samples[i]);}
   return[0,0,0,0];
@@ -167,8 +176,8 @@ async function getToken() {
   const body = new URLSearchParams({
     client_id: 'cdse-public',
     grant_type: 'password',
-    username: 'Belencomotto@me.com',
-    password: 'Monito130901Be.',
+    username: process.env.CDSE_USERNAME || 'Belencomotto@gmail.com',
+    password: process.env.CDSE_PASSWORD || 'Monito130901Be.',
   });
   const res = await fetch(TOKEN_URL, {
     method: 'POST',
@@ -232,6 +241,14 @@ async function downloadTile(auth, bandKey, year, month, tileBbox, maxCloudCovera
   });
 
   if (res.status === 204 || res.status === 404) return null;
+  if (res.status === 403) {
+    const body = await res.text();
+    if (body.includes('processing units') || body.includes('INSUFFICIENT') || body.includes('credits')) {
+      creditsExhausted = true;
+      throw new Error('CREDITS_EXHAUSTED: Sentinel Hub processing units depleted — stopping.');
+    }
+    throw new Error(`403: ${body.slice(0, 300)}`);
+  }
   if (!res.ok) throw new Error(`${res.status}: ${(await res.text()).slice(0, 300)}`);
   return Buffer.from(await res.arrayBuffer());
 }
@@ -318,7 +335,9 @@ function buildMonths() {
 // ─── Main ──────────────────────────────────────────────────────────────────────
 
 async function main() {
-  const months   = buildMonths();
+  let months = buildMonths();
+  if (ONLY_MONTH) months = months.filter(m => m.str === ONLY_MONTH);
+  if (ONLY_YEARS) months = months.filter(m => ONLY_YEARS.includes(m.year));
   const bandKeys = Object.keys(BANDS);
   const totalComposites = months.length * bandKeys.length;
 
@@ -341,7 +360,9 @@ async function main() {
   const fallbackLog = []; // months that needed escalated thresholds
 
   for (const { year, month, str } of months) {
+    if (creditsExhausted) break;
     for (const bandKey of bandKeys) {
+      if (creditsExhausted) break;
       done++;
       const outPath = join(OUTPUT_DIR, bandKey, `${str}.png`);
 
@@ -386,6 +407,10 @@ async function main() {
         }
       }
 
+      if (creditsExhausted) {
+        console.log(`\n\n⚠️  CREDITS EXHAUSTED — stopped before saving ${bandKey}/${str}. Re-run to resume.`);
+        break;
+      }
       if (finalBuffer) {
         writeFileSync(outPath, finalBuffer);
         if (usedThreshold) fallbackLog.push(`  ${bandKey}/${str} → needed ${usedThreshold}`);
