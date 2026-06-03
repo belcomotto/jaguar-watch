@@ -405,23 +405,32 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
   // Sync GSW / park / pump layer visibility
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !map.isStyleLoaded()) return;
-    const toggle = (id, vis) => {
-      if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis ? 'visible' : 'none');
+    if (!map) return;
+
+    const apply = () => {
+      const toggle = (id, vis) => {
+        if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis ? 'visible' : 'none');
+      };
+      toggle('park-fill', layers.park);
+      toggle('park-line', layers.park);
+      toggle('park-label', layers.park);
+      toggle('buffer-fill', layers.buffer);
+      toggle('buffer-line', layers.buffer);
+      toggle('buffer-label', layers.buffer);
+      toggle('pumps-dot', layers.pumps);
+      toggle('pumps-halo', layers.pumps);
+      for (const id of Object.keys(GSW_LAYERS)) toggle(`${id}-layer`, layers[id]);
+      toggle('flood-halo', layers.floodGauges);
+      toggle('flood-dot',  layers.floodGauges);
+      toggle('firms-halo', layers.firms);
+      toggle('firms-dot',  layers.firms);
     };
-    toggle('park-fill', layers.park);
-    toggle('park-line', layers.park);
-    toggle('park-label', layers.park);
-    toggle('buffer-fill', layers.buffer);
-    toggle('buffer-line', layers.buffer);
-    toggle('buffer-label', layers.buffer);
-    toggle('pumps-dot', layers.pumps);
-    toggle('pumps-halo', layers.pumps);
-    for (const id of Object.keys(GSW_LAYERS)) toggle(`${id}-layer`, layers[id]);
-    toggle('flood-halo', layers.floodGauges);
-    toggle('flood-dot',  layers.floodGauges);
-    toggle('firms-halo', layers.firms);
-    toggle('firms-dot',  layers.firms);
+
+    if (map.isStyleLoaded()) {
+      apply();
+    } else {
+      map.once('load', apply);
+    }
   }, [layers]);
 
   // Load flood gauge data when layer is enabled
@@ -433,12 +442,23 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
     src.setData(toGeoJSON(GAUGES));
   }, [layers.floodGauges]);
 
-  // Push FIRMS data into the map source whenever it loads
+  // Push FIRMS data into the map source whenever it loads.
+  // On production the API may respond before the Mapbox style finishes loading,
+  // so defer setData to the load event when the source isn't ready yet.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !firmsGeoJSON) return;
-    const src = map.getSource('firms');
-    if (src) src.setData(firmsGeoJSON);
+
+    const apply = () => {
+      const src = map.getSource('firms');
+      if (src) src.setData(firmsGeoJSON);
+    };
+
+    if (map.isStyleLoaded()) {
+      apply();
+    } else {
+      map.once('load', apply);
+    }
   }, [firmsGeoJSON, mapRef]);
 
   // Sync Sentinel layer visibility + image
