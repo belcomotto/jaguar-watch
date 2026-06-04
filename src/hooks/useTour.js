@@ -107,9 +107,9 @@ function vis(map, ids, on) {
 
 async function phasePark({ go, ease, map, setOverlay }) {
   vis(map, ['buffer-fill','buffer-line','buffer-label',
-            'pumps-dot','pumps-halo',
-            'flood-halo','flood-dot',
-            'firms-halo','firms-dot'], false);
+            'pumps-icon','pumps-halo',
+            'flood-halo','flood-icon',
+            'firms-halo','firms-icon'], false);
   vis(map, ['park-fill','park-line','park-label'], true);
   setOverlay({
     id: 'park',
@@ -135,9 +135,9 @@ async function phasePark({ go, ease, map, setOverlay }) {
 async function phaseBuffer({ go, ease, map, setOverlay }) {
   vis(map, ['park-fill','park-line','park-label',
             'buffer-fill','buffer-line','buffer-label'], true);
-  vis(map, ['pumps-dot','pumps-halo',
-            'flood-halo','flood-dot',
-            'firms-halo','firms-dot'], false);
+  vis(map, ['pumps-icon','pumps-halo',
+            'flood-halo','flood-icon',
+            'firms-halo','firms-icon'], false);
   setOverlay({
     id: 'buffer',
     title: 'Buffer Zone',
@@ -167,9 +167,9 @@ const MB_COORDS = [
 async function phaseMapbiomas({ go, pause, map, setOverlay }) {
   // Turn off all vector layers; park stays on for reference
   vis(map, ['buffer-fill','buffer-line','buffer-label',
-            'pumps-dot','pumps-halo',
-            'flood-halo','flood-dot',
-            'firms-halo','firms-dot'], false);
+            'pumps-icon','pumps-halo',
+            'flood-halo','flood-icon',
+            'firms-halo','firms-icon'], false);
   vis(map, ['park-fill','park-line','park-label'], true);
 
   // Turn off any leftover mapbiomas visibility from a previous run
@@ -219,9 +219,9 @@ async function phaseRiver({ go, ease, map, setOverlay }) {
     map.setPaintProperty('mapbiomas-layer', 'raster-opacity', 0);
   vis(map, ['park-fill','park-line','park-label',
             'buffer-fill','buffer-line','buffer-label',
-            'pumps-dot','pumps-halo',
-            'flood-halo','flood-dot',
-            'firms-halo','firms-dot'], false);
+            'pumps-icon','pumps-halo',
+            'flood-halo','flood-icon',
+            'firms-halo','firms-icon'], false);
   setOverlay({
     id: 'river',
     title: 'The Bermejo River',
@@ -245,9 +245,9 @@ async function phaseRiver({ go, ease, map, setOverlay }) {
 async function phasePumps({ go, pause, map, setOverlay, setLitPumps }) {
   vis(map, ['park-fill','park-line','park-label',
             'buffer-fill','buffer-line','buffer-label',
-            'flood-halo','flood-dot',
-            'firms-halo','firms-dot'], false);
-  vis(map, ['pumps-dot','pumps-halo'], true);
+            'flood-halo','flood-icon',
+            'firms-halo','firms-icon'], false);
+  vis(map, ['pumps-icon','pumps-halo'], true);
   setLitPumps([]);
   setOverlay({
     id: 'pumps-intro',
@@ -276,9 +276,9 @@ async function phasePumps({ go, pause, map, setOverlay, setLitPumps }) {
 }
 
 async function phaseGauges({ go, pause, map, setOverlay, setLitPumps }) {
-  vis(map, ['pumps-dot','pumps-halo',
+  vis(map, ['pumps-icon','pumps-halo',
             'buffer-fill','buffer-line','buffer-label',
-            'firms-halo','firms-dot'], false);
+            'firms-halo','firms-icon'], false);
   vis(map, ['park-fill','park-line','park-label'], true);
   setLitPumps([]);
   setOverlay(null);
@@ -293,7 +293,7 @@ async function phaseGauges({ go, pause, map, setOverlay, setLitPumps }) {
 
   const gaugeSrc = map.getSource('flood-gauges');
   if (gaugeSrc) gaugeSrc.setData(toGeoJSON(GAUGES));
-  vis(map, ['flood-halo','flood-dot'], true);
+  vis(map, ['flood-halo','flood-icon'], true);
   setOverlay({
     id: 'gauges',
     title: 'Flood Monitoring',
@@ -304,7 +304,7 @@ async function phaseGauges({ go, pause, map, setOverlay, setLitPumps }) {
 }
 
 async function phaseFires({ pause, map, setOverlay, firmsStatsRef }) {
-  vis(map, ['firms-halo','firms-dot'], true);
+  vis(map, ['firms-halo','firms-icon'], true);
   setOverlay({
     id: 'fires',
     title: 'Active Fire Alerts',

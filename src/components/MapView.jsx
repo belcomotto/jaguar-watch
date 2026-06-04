@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { GAUGES, STATUS_COLORS, STATUS_LABELS, toGeoJSON } from '../data/floodGauges';
+import MapLayerPanel from './MapLayerPanel';
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
@@ -61,9 +62,108 @@ const FIRMS_CONF_COLOR = ['match', ['get', 'confidence'],
   '#ffcc00',
 ];
 
+// ── Canvas-drawn map icons ────────────────────────────────────────────────────
+// Drawn at 2× so they stay crisp on retina. pixelRatio:2 tells Mapbox the
+// logical size is half the canvas size.
+
+function makeIcon(drawFn, size = 24) {
+  const px = size * 2;
+  const c = document.createElement('canvas');
+  c.width = px; c.height = px;
+  const ctx = c.getContext('2d');
+  ctx.scale(2, 2);
+  drawFn(ctx, size);
+  return ctx.getImageData(0, 0, px, px);
+}
+
+function flameIcon(color) {
+  return makeIcon((ctx, S) => {
+    const cx = S / 2;
+    const flamePath = () => {
+      ctx.beginPath();
+      ctx.moveTo(cx, S - 2);
+      ctx.bezierCurveTo(cx - 7, S - 3, cx - 8, S - 8, cx - 5, S - 12);
+      ctx.bezierCurveTo(cx - 3, S - 15, cx - 2, S - 17, cx - 1, 2);
+      ctx.bezierCurveTo(cx + 2, S - 17, cx + 3, S - 15, cx + 5, S - 12);
+      ctx.bezierCurveTo(cx + 8, S - 8, cx + 7, S - 3, cx, S - 2);
+      ctx.closePath();
+    };
+    // white border
+    flamePath();
+    ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+    ctx.lineWidth = 2;
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+    // colour fill
+    flamePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+    // inner glow
+    ctx.fillStyle = 'rgba(255,240,120,0.55)';
+    ctx.beginPath();
+    ctx.ellipse(cx, S - 8, 3.5, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
+function wavesIcon(color) {
+  return makeIcon((ctx, S) => {
+    ctx.lineCap = 'round';
+    for (const y of [S * 0.3, S * 0.52, S * 0.74]) {
+      const wave = () => {
+        ctx.beginPath();
+        ctx.moveTo(2, y);
+        ctx.bezierCurveTo(S * 0.27, y - S * 0.17, S * 0.48, y + S * 0.17, S * 0.67, y);
+        ctx.bezierCurveTo(S * 0.82, y - S * 0.12, S - 3, y + S * 0.05, S - 2, y);
+      };
+      // white border (drawn first, wider)
+      wave();
+      ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+      // colour on top
+      wave();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2.2;
+      ctx.stroke();
+    }
+  });
+}
+
+function pumpIcon(color) {
+  return makeIcon((ctx, S) => {
+    const draw = (stroke) => {
+      if (stroke) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+        ctx.lineWidth = 2;
+        ctx.lineJoin = 'round';
+      } else {
+        ctx.fillStyle = color;
+      }
+      // motor body
+      ctx.beginPath();
+      ctx.arc(S * 0.4, S * 0.42, S * 0.25, 0, Math.PI * 2);
+      stroke ? ctx.stroke() : ctx.fill();
+      // horizontal outlet pipe
+      ctx.beginPath();
+      ctx.roundRect(S * 0.6, S * 0.33, S * 0.35, S * 0.18, 2);
+      stroke ? ctx.stroke() : ctx.fill();
+      // vertical intake pipe
+      ctx.beginPath();
+      ctx.roundRect(S * 0.32, S * 0.65, S * 0.17, S * 0.28, 2);
+      stroke ? ctx.stroke() : ctx.fill();
+    };
+    draw(true);  // white border pass
+    draw(false); // colour fill pass
+  });
+}
+
 export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON, mapbiomas, onIntroComplete }) {
   const containerRef = useRef(null);
   const onIntroCompleteRef = useRef(onIntroComplete);
+  const [overlays, setOverlays] = useState({ borders: false, places: false });
+
+  const handleOverlayChange = (key, val) => setOverlays(prev => ({ ...prev, [key]: val }));
 
   useEffect(() => {
     const skipIntro = introPlayed;
@@ -85,6 +185,74 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
     mapRef.current = map;
 
     map.on('load', async () => {
+      // ── Custom marker icons ───────────────────────────────────────────────
+      map.addImage('flame-h', flameIcon('#ff2200'), { pixelRatio: 2 });
+      map.addImage('flame-n', flameIcon('#ff8800'), { pixelRatio: 2 });
+      map.addImage('flame-l', flameIcon('#ffcc00'), { pixelRatio: 2 });
+      map.addImage('waves-warning',  wavesIcon(STATUS_COLORS.warning),  { pixelRatio: 2 });
+      map.addImage('waves-watch',    wavesIcon(STATUS_COLORS.watch),    { pixelRatio: 2 });
+      map.addImage('waves-advisory', wavesIcon(STATUS_COLORS.advisory), { pixelRatio: 2 });
+      map.addImage('waves-normal',   wavesIcon(STATUS_COLORS.normal),   { pixelRatio: 2 });
+      map.addImage('waves-pending',  wavesIcon(STATUS_COLORS.pending),  { pixelRatio: 2 });
+      map.addImage('pump-icon',      pumpIcon('#63412F'),               { pixelRatio: 2 });
+
+      // ── Mapbox Streets overlay (borders + place labels) ──────────────────
+      map.addSource('mapbox-streets', {
+        type: 'vector',
+        url: 'mapbox://mapbox.mapbox-streets-v8',
+      });
+      map.addLayer({
+        id: 'overlay-country-border',
+        type: 'line',
+        source: 'mapbox-streets',
+        'source-layer': 'admin',
+        filter: ['==', ['get', 'admin_level'], 0],
+        paint: {
+          'line-color': 'rgba(255,255,255,0.85)',
+          'line-width': ['interpolate', ['linear'], ['zoom'], 3, 1, 10, 2],
+          'line-dasharray': [3, 2],
+        },
+        layout: { visibility: 'none' },
+      });
+      map.addLayer({
+        id: 'overlay-province-border',
+        type: 'line',
+        source: 'mapbox-streets',
+        'source-layer': 'admin',
+        filter: ['==', ['get', 'admin_level'], 1],
+        paint: {
+          'line-color': 'rgba(255,255,255,0.5)',
+          'line-width': ['interpolate', ['linear'], ['zoom'], 3, 0.5, 10, 1.5],
+          'line-dasharray': [4, 3],
+        },
+        layout: { visibility: 'none' },
+      });
+      map.addLayer({
+        id: 'overlay-place-labels',
+        type: 'symbol',
+        source: 'mapbox-streets',
+        'source-layer': 'place_label',
+        layout: {
+          'text-field': ['coalesce', ['get', 'name_es'], ['get', 'name']],
+          'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+          'text-size': ['interpolate', ['linear'], ['zoom'],
+            6,  ['match', ['get', 'type'], ['city'], 13, ['town'], 10, 8],
+            14, ['match', ['get', 'type'], ['city'], 18, ['town'], 14, 11],
+          ],
+          'text-anchor': 'top',
+          'text-offset': [0, 0.2],
+          'text-allow-overlap': false,
+          'text-ignore-placement': false,
+          visibility: 'none',
+        },
+        paint: {
+          'text-color': '#ffffff',
+          'text-halo-color': 'rgba(0,0,0,0.75)',
+          'text-halo-width': 1.5,
+          'text-halo-blur': 0.5,
+        },
+      });
+
       // Atmospheric globe effect — space → blue horizon → terrain haze
       map.setFog({
         color:           'rgb(210, 220, 230)',
@@ -144,12 +312,12 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
         paint: { 'circle-radius': 16, 'circle-color': '#63412F',
                  'circle-opacity': 0.22, 'circle-stroke-width': 0 },
         layout: { visibility: 'none' } });
-      map.addLayer({ id: 'pumps-dot', type: 'circle', source: 'pumps',
-        paint: { 'circle-radius': 6, 'circle-color': '#63412F', 'circle-opacity': 1,
-                 'circle-stroke-width': 1.5, 'circle-stroke-color': '#DED8CF' },
-        layout: { visibility: 'none' } });
+      map.addLayer({ id: 'pumps-icon', type: 'symbol', source: 'pumps',
+        layout: { 'icon-image': 'pump-icon', 'icon-size': 0.72,
+                  'icon-allow-overlap': true, 'icon-ignore-placement': true,
+                  visibility: 'none' } });
 
-      map.on('click', 'pumps-dot', (e) => {
+      map.on('click', 'pumps-icon', (e) => {
         const props = e.features[0].properties;
         new mapboxgl.Popup({ className: 'pump-popup', closeButton: false })
           .setLngLat(e.lngLat)
@@ -161,8 +329,8 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
           </div>`)
           .addTo(map);
       });
-      map.on('mouseenter', 'pumps-dot', () => { map.getCanvas().style.cursor = 'pointer'; });
-      map.on('mouseleave', 'pumps-dot', () => { map.getCanvas().style.cursor = ''; });
+      map.on('mouseenter', 'pumps-icon', () => { map.getCanvas().style.cursor = 'pointer'; });
+      map.on('mouseleave', 'pumps-icon', () => { map.getCanvas().style.cursor = ''; });
 
       // ── GSW image overlays ────────────────────────────────────────────────
       for (const [id, file] of Object.entries(GSW_LAYERS)) {
@@ -195,24 +363,24 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
         layout: { visibility: 'none' },
       });
       map.addLayer({
-        id: 'flood-dot',
-        type: 'circle',
+        id: 'flood-icon',
+        type: 'symbol',
         source: 'flood-gauges',
-        paint: {
-          'circle-radius': 6,
-          'circle-color': ['match', ['get', 'status'],
-            'warning', STATUS_COLORS.warning,
-            'watch',   STATUS_COLORS.watch,
-            'advisory',STATUS_COLORS.advisory,
-            STATUS_COLORS.normal,
+        layout: {
+          'icon-image': ['match', ['get', 'status'],
+            'warning',  'waves-warning',
+            'watch',    'waves-watch',
+            'advisory', 'waves-advisory',
+            'pending',  'waves-pending',
+            'waves-normal',
           ],
-          'circle-opacity': 1,
-          'circle-stroke-width': 1.5,
-          'circle-stroke-color': '#DED8CF',
+          'icon-size': 0.72,
+          'icon-allow-overlap': true,
+          'icon-ignore-placement': true,
+          visibility: 'none',
         },
-        layout: { visibility: 'none' },
       });
-      map.on('click', 'flood-dot', (e) => {
+      map.on('click', 'flood-icon', (e) => {
         const p = e.features[0].properties;
         const color = STATUS_COLORS[p.status] || STATUS_COLORS.pending;
         const label = STATUS_LABELS[p.status] || 'Awaiting live data';
@@ -238,8 +406,8 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
           </div>`)
           .addTo(map);
       });
-      map.on('mouseenter', 'flood-dot', () => { map.getCanvas().style.cursor = 'pointer'; });
-      map.on('mouseleave', 'flood-dot', () => { map.getCanvas().style.cursor = ''; });
+      map.on('mouseenter', 'flood-icon', () => { map.getCanvas().style.cursor = 'pointer'; });
+      map.on('mouseleave', 'flood-icon', () => { map.getCanvas().style.cursor = ''; });
 
       // ── FIRMS fire alerts ─────────────────────────────────────────────────
       map.addSource('firms', {
@@ -259,19 +427,22 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
         layout: { visibility: 'none' },
       });
       map.addLayer({
-        id: 'firms-dot',
-        type: 'circle',
+        id: 'firms-icon',
+        type: 'symbol',
         source: 'firms',
-        paint: {
-          'circle-radius': 5,
-          'circle-color': FIRMS_CONF_COLOR,
-          'circle-opacity': 1,
-          'circle-stroke-width': 1,
-          'circle-stroke-color': 'rgba(255,255,255,0.6)',
+        layout: {
+          'icon-image': ['match', ['get', 'confidence'],
+            'h', 'flame-h', 'high', 'flame-h',
+            'n', 'flame-n', 'nominal', 'flame-n',
+            'flame-l',
+          ],
+          'icon-size': 0.72,
+          'icon-allow-overlap': true,
+          'icon-ignore-placement': true,
+          visibility: 'none',
         },
-        layout: { visibility: 'none' },
       });
-      map.on('click', 'firms-dot', (e) => {
+      map.on('click', 'firms-icon', (e) => {
         const p = e.features[0].properties;
         const confLabel = { h: 'High', high: 'High', n: 'Nominal', nominal: 'Nominal', l: 'Low', low: 'Low' }[p.confidence] ?? p.confidence;
         new mapboxgl.Popup({ className: 'pump-popup', closeButton: false })
@@ -286,8 +457,8 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
           </div>`)
           .addTo(map);
       });
-      map.on('mouseenter', 'firms-dot', () => { map.getCanvas().style.cursor = 'pointer'; });
-      map.on('mouseleave', 'firms-dot', () => { map.getCanvas().style.cursor = ''; });
+      map.on('mouseenter', 'firms-icon', () => { map.getCanvas().style.cursor = 'pointer'; });
+      map.on('mouseleave', 'firms-icon', () => { map.getCanvas().style.cursor = ''; });
 
       // ── Globe intro dive ──────────────────────────────────────────────────
       // ── Tour pump highlight source + layers (start empty) ────────────────
@@ -417,13 +588,13 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
       toggle('buffer-fill', layers.buffer);
       toggle('buffer-line', layers.buffer);
       toggle('buffer-label', layers.buffer);
-      toggle('pumps-dot', layers.pumps);
+      toggle('pumps-icon', layers.pumps);
       toggle('pumps-halo', layers.pumps);
       for (const id of Object.keys(GSW_LAYERS)) toggle(`${id}-layer`, layers[id]);
       toggle('flood-halo', layers.floodGauges);
-      toggle('flood-dot',  layers.floodGauges);
+      toggle('flood-icon', layers.floodGauges);
       toggle('firms-halo', layers.firms);
-      toggle('firms-dot',  layers.firms);
+      toggle('firms-icon', layers.firms);
     };
 
     if (map.isStyleLoaded()) {
@@ -513,5 +684,25 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
     }
   }, [mapbiomas?.enabled, mapbiomas?.year, mapRef]);
 
-  return <div ref={containerRef} style={{ position: 'absolute', inset: 0 }} />;
+  // Sync borders / place-label overlay visibility
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const apply = () => {
+      const tog = (id, on) => {
+        if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none');
+      };
+      tog('overlay-country-border',  overlays.borders);
+      tog('overlay-province-border', overlays.borders);
+      tog('overlay-place-labels',    overlays.places);
+    };
+    if (map.isStyleLoaded()) apply(); else map.once('load', apply);
+  }, [overlays, mapRef]);
+
+  return (
+    <div style={{ position: 'absolute', inset: 0 }}>
+      <div ref={containerRef} style={{ position: 'absolute', inset: 0 }} />
+      <MapLayerPanel overlays={overlays} onChange={handleOverlayChange} />
+    </div>
+  );
 }

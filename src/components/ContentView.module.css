@@ -51,7 +51,8 @@
 .timelineItem {
   display: grid;
   grid-template-columns: 130px 1fr;
-  gap: 24px;
+  column-gap: 24px;
+  row-gap: 16px;
   padding: 28px 0;
   border-bottom: 1px solid rgba(99, 65, 47, 0.2);
 }
@@ -70,6 +71,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-width: 0; /* lets overflow-x:auto on the strip clip properly */
 }
 
 /* Section titles (shared) */
@@ -168,6 +170,102 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+/* History image strip — spans full grid width (both year + content columns) */
+.imgStrip {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(99, 65, 47, 0.35) transparent;
+}
+
+.imgStrip::-webkit-scrollbar {
+  height: 4px;
+}
+.imgStrip::-webkit-scrollbar-track {
+  background: transparent;
+}
+.imgStrip::-webkit-scrollbar-thumb {
+  background: rgba(99, 65, 47, 0.35);
+  border-radius: 2px;
+}
+
+.imgStripItem {
+  height: 210px;
+  width: auto;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: 2px;
+  display: block;
+  filter: sepia(0.18) brightness(0.92);
+  transition: filter 0.2s ease;
+  cursor: pointer;
+}
+
+.imgStripItem:hover {
+  filter: sepia(0) brightness(1);
+}
+
+/* Lightbox */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(6, 10, 18, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: zoom-out;
+}
+
+.lightboxInner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  max-width: 90vw;
+  max-height: 90vh;
+}
+
+.lightboxCaption {
+  font-family: 'IM Fell Double Pica', serif;
+  font-size: 15px;
+  line-height: 1.6;
+  color: rgba(222, 216, 207, 0.85);
+  text-align: center;
+  max-width: 680px;
+  margin: 0;
+  font-style: italic;
+}
+
+.lightboxImg {
+  max-width: 90vw;
+  max-height: 82vh;
+  object-fit: contain;
+  border-radius: 3px;
+  box-shadow: 0 8px 64px rgba(0, 0, 0, 0.6);
+}
+
+.lightboxClose {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  background: none;
+  border: none;
+  color: rgba(222, 216, 207, 0.7);
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
+  transition: color 0.15s;
+}
+
+.lightboxClose:hover {
+  color: var(--sand);
 }
 
 /* Footer */
