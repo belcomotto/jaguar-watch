@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import styles from './TourOverlay.module.css';
 
-export default function TourOverlay({ step, onSkip, onBack, canGoBack }) {
+export default function TourOverlay({ step, onSkip, onBack, canGoBack, onForward, canGoForward, onPause, paused }) {
   const cardRef = useRef(null);
 
   // Fade out fully (350ms) then fade in on each step change
@@ -23,9 +23,15 @@ export default function TourOverlay({ step, onSkip, onBack, canGoBack }) {
         <span className={styles.eyebrow}>Guided Tour</span>
         <div className={styles.headerActions}>
           {canGoBack && (
-            <button className={styles.back} onClick={onBack}>← Back</button>
+            <button className={styles.navBtn} onClick={onBack}>← Back</button>
           )}
-          <button className={styles.skip} onClick={onSkip}>Skip ✕</button>
+          <button className={styles.navBtn} onClick={onPause}>
+            {paused ? '▶ Resume' : '⏸ Pause'}
+          </button>
+          {canGoForward && (
+            <button className={styles.navBtn} onClick={onForward}>Forward →</button>
+          )}
+          <button className={styles.exitBtn} onClick={onSkip}>Exit ✕</button>
         </div>
       </div>
       <h3 className={styles.title}>{step.title}</h3>

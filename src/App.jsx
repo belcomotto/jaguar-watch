@@ -68,7 +68,7 @@ export default function App() {
     setLayers(POST_TOUR_LAYERS);
   }, []);
 
-  const { overlay, startTour, stopTour, goBack, canGoBack } = useTour(mapRef, { onComplete: handleTourComplete, firmsStats });
+  const { overlay, startTour, stopTour, goBack, canGoBack, goForward, canGoForward, togglePause, paused } = useTour(mapRef, { onComplete: handleTourComplete, firmsStats });
 
   const handleIntroComplete = useCallback(() => setTourPhase('welcome'), []);
 
@@ -133,7 +133,16 @@ export default function App() {
       )}
 
       {tourPhase === 'touring' && (
-        <TourOverlay step={overlay} onSkip={handleSkipTour} onBack={goBack} canGoBack={canGoBack} />
+        <TourOverlay
+          step={overlay}
+          onSkip={handleSkipTour}
+          onBack={goBack}
+          canGoBack={canGoBack}
+          onForward={goForward}
+          canGoForward={canGoForward}
+          onPause={togglePause}
+          paused={paused}
+        />
       )}
     </div>
   );

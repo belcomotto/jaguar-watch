@@ -422,8 +422,11 @@ export function useTour(mapRef, { onComplete, firmsStats } = {}) {
   const [overlay, setOverlay] = useState(null);
   const [touring, setTouring] = useState(false);
   const [canGoBack, setCanGoBack] = useState(false);
+  const [canGoForward, setCanGoForward] = useState(false);
+  const [paused, setPaused] = useState(false);
 
   const cancelled = useRef(false);
+  const pausedRef = useRef(false);
   const phaseRef = useRef(0);
   const goingBackTarget = useRef(-1);
   const onCompleteRef = useRef(onComplete);
@@ -445,8 +448,11 @@ export function useTour(mapRef, { onComplete, firmsStats } = {}) {
     if (!map) return;
 
     cancelled.current = false;
+    pausedRef.current = false;
+    setPaused(false);
     setTouring(true);
     setCanGoBack(startPhase > 0);
+    setCanGoForward(startPhase < PHASES.length - 1);
 
     // Reset transient direct-manipulation layers so each phase starts clean
     if (map.getLayer('mapbiomas-layer'))
@@ -471,17 +477,20 @@ export function useTour(mapRef, { onComplete, firmsStats } = {}) {
       });
     });
 
-    // Poll every 100ms so cancellation takes effect quickly even during long pauses
+    // Poll every 100ms; frozen time when paused so the clock doesn't run down
     const pause = (ms) => new Promise((resolve, reject) => {
       if (cancelled.current) { reject(new Error('cancelled')); return; }
-      const end = Date.now() + ms;
+      let remaining = ms;
+      let lastTick = Date.now();
       const tick = () => {
         if (cancelled.current) { reject(new Error('cancelled')); return; }
-        const rem = end - Date.now();
-        if (rem <= 0) { resolve(); return; }
-        setTimeout(tick, Math.min(rem, 100));
+        const now = Date.now();
+        if (!pausedRef.current) remaining -= (now - lastTick);
+        lastTick = now;
+        if (remaining <= 0) { resolve(); return; }
+        setTimeout(tick, 100);
       };
-      setTimeout(tick, Math.min(ms, 100));
+      setTimeout(tick, 100);
     });
 
     const ctx = { go, ease, pause, map, setOverlay, setLitPumps, firmsStatsRef };
@@ -491,6 +500,7 @@ export function useTour(mapRef, { onComplete, firmsStats } = {}) {
       for (let i = startPhase; i < PHASES.length; i++) {
         phaseRef.current = i;
         setCanGoBack(i > 0);
+        setCanGoForward(i < PHASES.length - 1);
         await PHASES[i](ctx);
       }
     } catch (e) {
@@ -507,14 +517,18 @@ export function useTour(mapRef, { onComplete, firmsStats } = {}) {
     if (completing) {
       setTouring(false);
       setCanGoBack(false);
+      setCanGoForward(false);
+      setPaused(false);
       onCompleteRef.current?.();
     } else if (goBackTo >= 0) {
-      // Re-enter from the previous phase (tail-call, no setTimeout needed)
+      // Re-enter from the target phase (Back or Forward)
       runFromPhaseRef.current(goBackTo);
     } else {
       // Skip / stopTour
       setTouring(false);
       setCanGoBack(false);
+      setCanGoForward(false);
+      setPaused(false);
     }
   }, [mapRef, setLitPumps]);
 
@@ -530,15 +544,32 @@ export function useTour(mapRef, { onComplete, firmsStats } = {}) {
     mapRef.current?.stop(); // triggers moveend immediately if an animation is running
   }, [mapRef]);
 
+  const togglePause = useCallback(() => {
+    const next = !pausedRef.current;
+    pausedRef.current = next;
+    setPaused(next);
+  }, []);
+
+  const goForward = useCallback(() => {
+    const next = phaseRef.current + 1;
+    if (next >= PHASES.length) return;
+    goingBackTarget.current = next;
+    cancelled.current = true;
+    mapRef.current?.stop();
+  }, [mapRef]);
+
   const stopTour = useCallback(() => {
     goingBackTarget.current = -1;
     cancelled.current = true;
+    pausedRef.current = false;
     mapRef.current?.stop();
     setOverlay(null);
     setTouring(false);
     setCanGoBack(false);
+    setCanGoForward(false);
+    setPaused(false);
     setLitPumps([]);
   }, [setLitPumps, mapRef]);
 
-  return { overlay, touring, startTour, stopTour, goBack, canGoBack };
+  return { overlay, touring, startTour, stopTour, goBack, canGoBack, goForward, canGoForward, togglePause, paused };
 }

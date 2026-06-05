@@ -34,10 +34,10 @@
 .headerActions {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
 }
 
-.back {
+.navBtn {
   font-family: 'Icone Pro', 'IM Fell Double Pica', serif;
   font-size: 10px;
   letter-spacing: 0.1em;
@@ -48,9 +48,10 @@
   cursor: pointer;
   padding: 0;
   transition: color 0.15s;
+  white-space: nowrap;
 }
 
-.back:hover {
+.navBtn:hover {
   color: var(--sand);
 }
 
@@ -85,7 +86,7 @@
   color: var(--sand);
 }
 
-.skip {
+.exitBtn {
   font-family: 'Icone Pro', 'IM Fell Double Pica', serif;
   font-size: 10px;
   letter-spacing: 0.1em;
@@ -95,10 +96,13 @@
   border: none;
   cursor: pointer;
   padding: 0;
+  padding-left: 6px;
+  border-left: 1px solid var(--panel-border);
   transition: color 0.15s;
+  white-space: nowrap;
 }
 
-.skip:hover {
+.exitBtn:hover {
   color: var(--sand);
 }
 
