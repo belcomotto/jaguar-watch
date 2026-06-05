@@ -10,7 +10,6 @@ const GSW_BOUNDS = [-62.5, -25.7, -60.4, -24.0];
 
 const GSW_LAYERS = {
   gsw_seasonality: '/data/gsw_seasonality.png',
-  gsw_extent:      '/data/gsw_extent.png',
   gsw_transitions: '/data/gsw_transitions.png',
 };
 

@@ -16,7 +16,6 @@ const DEFAULT_LAYERS = {
   pumps: false,
   firms: false,
   gsw_seasonality: false,
-  gsw_extent: false,
   gsw_transitions: false,
   floodGauges: false,
 };

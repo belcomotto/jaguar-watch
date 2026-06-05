@@ -30,7 +30,7 @@ const PUMP_SEQUENCE = [
     coords: [-61.687704, -24.367092],
     title: 'Toma Laguna Yema',
     subtitle: 'Toma grande · Formosa',
-    body: 'High-volume extraction serving Laguna Yema. Located near the park\'s eastern buffer, raising cumulative extraction concerns.',
+    body: 'High-volume extraction serving Laguna Yema. Located near the park\'s eastern buffer, raising cumulative extraction concernsdue to the pasture and agricultural growth of the area.',
   },
   {
     coords: [-61.713700, -24.386666],
@@ -102,6 +102,31 @@ function vis(map, ids, on) {
   });
 }
 
+function gswReset(map, layerId) {
+  if (!map.getLayer(layerId)) return;
+  map.setLayoutProperty(layerId, 'visibility', 'none');
+  map.setPaintProperty(layerId, 'raster-opacity', 0.85);
+}
+
+async function gswFadeIn(pause, map, layerId, steps = 14) {
+  if (!map.getLayer(layerId)) return;
+  map.setPaintProperty(layerId, 'raster-opacity', 0);
+  map.setLayoutProperty(layerId, 'visibility', 'visible');
+  for (let i = 1; i <= steps; i++) {
+    map.setPaintProperty(layerId, 'raster-opacity', (i / steps) * 0.85);
+    await pause(50);
+  }
+}
+
+async function gswFadeOut(pause, map, layerId, steps = 14) {
+  if (!map.getLayer(layerId)) return;
+  for (let i = steps - 1; i >= 0; i--) {
+    map.setPaintProperty(layerId, 'raster-opacity', (i / steps) * 0.85);
+    await pause(50);
+  }
+  gswReset(map, layerId);
+}
+
 // ── Phase functions ────────────────────────────────────────────────────────
 // Each phase is self-contained: resets relevant layers, sets overlay, animates.
 
@@ -110,12 +135,14 @@ async function phasePark({ go, ease, map, setOverlay }) {
             'pumps-icon','pumps-halo',
             'flood-halo','flood-icon',
             'firms-halo','firms-icon'], false);
+  gswReset(map, 'gsw_seasonality-layer');
+  gswReset(map, 'gsw_transitions-layer');
   vis(map, ['park-fill','park-line','park-label'], true);
   setOverlay({
     id: 'park',
     title: 'El Impenetrable',
     subtitle: 'National Park',
-    body: '508,000 hectares of dry Chaco forest — designated in 2020, one of Argentina\'s newest and largest protected areas.',
+    body: '128,000 hectares of dry Chaco forest — designated in 2014, and opened in 2017, one of Argentina\'s newest and largest protected areas.',
   });
   // Dive to ground level at park centre
   await go({
@@ -213,31 +240,57 @@ async function phaseMapbiomas({ go, pause, map, setOverlay }) {
     map.setPaintProperty('mapbiomas-layer', 'raster-opacity', 0);
 }
 
-async function phaseRiver({ go, ease, map, setOverlay }) {
-  // Ensure mapbiomas is off (in case we jumped here via Back)
+async function phaseRiver({ go, ease, pause, map, setOverlay }) {
+  // Ensure mapbiomas and GSW layers are off (in case we jumped here via Back)
   if (map.getLayer('mapbiomas-layer'))
     map.setPaintProperty('mapbiomas-layer', 'raster-opacity', 0);
+  gswReset(map, 'gsw_seasonality-layer');
+  gswReset(map, 'gsw_transitions-layer');
   vis(map, ['park-fill','park-line','park-label',
             'buffer-fill','buffer-line','buffer-label',
             'pumps-icon','pumps-halo',
             'flood-halo','flood-icon',
             'firms-halo','firms-icon'], false);
+
+  // ── Diagonal flight — Bermejo intro ──────────────────────────────────────
   setOverlay({
     id: 'river',
     title: 'The Bermejo River',
     subtitle: null,
     body: '1,200 km of shifting meanders — flying west from the buffer\'s eastern edge to the first extraction point at Fortín Belgrano.',
   });
-  // Drone flight west along the river (bearing ~285–290° = WNW)
   await go({
     center: [-61.25, -24.52],
     zoom: 11.5, pitch: 65, bearing: 290,
     duration: 5000,
     easing: t => 1 - Math.pow(1 - t, 4),
   });
+
+  // ── Straight flight begins — Water Seasonality ───────────────────────────
+  await gswFadeIn(pause, map, 'gsw_seasonality-layer');
+  setOverlay({
+    id: 'river-seasonality',
+    title: 'Water Seasonality',
+    subtitle: '1984–2021 · Global Surface Water',
+    body: 'Water seasonality shows how many months per year surface water was present, averaged from 1984 to 2021. Light blue corresponds to 1 month per year, showing us the changing nature of the Bermejo.',
+  });
   await ease({ center: [-61.75, -24.40], bearing: 288, zoom: 11.5, pitch: 67, duration: 5000, easing: t => t });
+
+  // ── Water Transitions ────────────────────────────────────────────────────
+  await gswFadeOut(pause, map, 'gsw_seasonality-layer');
+  await gswFadeIn(pause, map, 'gsw_transitions-layer');
+  setOverlay({
+    id: 'river-transitions',
+    title: 'Water Transitions',
+    subtitle: '1984–2021 · Global Surface Water',
+    body: 'The Bermejo river is alive, it pulses with every season. Light green, fuchsia and grey colors correspond to "New seasonal", "Lost seasonal" and "Ephemeral seasonal" correspondingly — showing us how each season creates new paths for life.',
+  });
   await ease({ center: [-62.05, -24.25], bearing: 285, zoom: 11.5, pitch: 68, duration: 5000, easing: t => t });
   await ease({ center: [-62.34, -24.11], bearing: 280, zoom: 12.0, pitch: 68, duration: 4000, easing: t => t });
+
+  // Fade out before turning to face pumps
+  await gswFadeOut(pause, map, 'gsw_transitions-layer');
+
   // 180° turn — now facing east, ready to tour pumps west → east
   await ease({ bearing: 100, zoom: 13.5, pitch: 72, duration: 3500, easing: t => 1 - Math.pow(1 - t, 3) });
 }
@@ -247,6 +300,8 @@ async function phasePumps({ go, pause, map, setOverlay, setLitPumps }) {
             'buffer-fill','buffer-line','buffer-label',
             'flood-halo','flood-icon',
             'firms-halo','firms-icon'], false);
+  gswReset(map, 'gsw_seasonality-layer');
+  gswReset(map, 'gsw_transitions-layer');
   vis(map, ['pumps-icon','pumps-halo'], true);
   setLitPumps([]);
   setOverlay({

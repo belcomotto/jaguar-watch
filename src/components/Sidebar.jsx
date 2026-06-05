@@ -51,12 +51,6 @@ const LAYER_INFO = {
       { color: '#0d47a1', label: '12 months — permanent' },
     ],
   },
-  gsw_extent: {
-    description: 'The maximum spatial extent of surface water ever detected across all years of observation (1984–2021). A location is shown if it was covered by water at least once in any year.',
-    legend: [
-      { color: '#0077bb', label: 'Water detected at least once' },
-    ],
-  },
   gsw_transitions: {
     description: 'Captures how the nature of surface water changed between the early epoch (1984–1999) and the late epoch (2000–2021), distinguishing losses, gains, and changes in permanence.',
     legend: [
@@ -103,7 +97,6 @@ const LAYER_GROUPS = [
     sublabel: 'JRC / Copernicus · 1984–2021',
     layers: [
       { id: 'gsw_seasonality', label: 'Water Seasonality', color: '#5dacc8', gsw: true },
-      { id: 'gsw_extent',      label: 'Max Water Extent',  color: '#0077bb', gsw: true },
       { id: 'gsw_transitions', label: 'Water Transitions', color: '#ff7f27', gsw: true },
     ],
   },
