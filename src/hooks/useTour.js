@@ -142,7 +142,7 @@ async function phasePark({ go, ease, map, setOverlay }) {
     id: 'park',
     title: 'El Impenetrable',
     subtitle: 'National Park',
-    body: '128,000 hectares of dry Chaco forest — designated in 2014, and opened in 2017, one of Argentina\'s newest and largest protected areas.',
+    body: ' Here, 128,000 hectares of dry Chaco forest stretch to the horizon — knotted quebracho, palo santo and algarrobo so dense and thorny they gave this land its name: the Impenetrable. Protected by national law in 2014, it waited until 2017 for the first rangers to set foot inside. Ancient wilderness — only newly defended.',
   });
   // Dive to ground level at park centre
   await go({
@@ -257,7 +257,7 @@ async function phaseRiver({ go, ease, pause, map, setOverlay }) {
     id: 'river',
     title: 'The Bermejo River',
     subtitle: null,
-    body: '1,200 km of shifting meanders — flying west from the buffer\'s eastern edge to the first extraction point at Fortín Belgrano.',
+    body: 'The Bermejo — known here by its older name, the Teuco — winds more than 1,000 km of restless, shifting channels along the park'/s northern edge. We follow it upstream, west, to the first place where its water is being drawn.',
   });
   await go({
     center: [-61.25, -24.52],
@@ -304,6 +304,7 @@ async function phasePumps({ go, pause, map, setOverlay, setLitPumps }) {
   gswReset(map, 'gsw_seasonality-layer');
   gswReset(map, 'gsw_transitions-layer');
   vis(map, ['pumps-icon','pumps-halo'], true);
+  vis(map, ['overlay-place-labels'], true);
   setLitPumps([]);
   setOverlay({
     id: 'pumps-intro',
@@ -334,7 +335,8 @@ async function phasePumps({ go, pause, map, setOverlay, setLitPumps }) {
 async function phaseGauges({ go, pause, map, setOverlay, setLitPumps }) {
   vis(map, ['pumps-icon','pumps-halo',
             'buffer-fill','buffer-line','buffer-label',
-            'firms-halo','firms-icon'], false);
+            'firms-halo','firms-icon',
+            'overlay-place-labels'], false);
   vis(map, ['park-fill','park-line','park-label'], true);
   setLitPumps([]);
   setOverlay(null);
@@ -360,7 +362,8 @@ async function phaseGauges({ go, pause, map, setOverlay, setLitPumps }) {
 }
 
 async function phaseFires({ pause, map, setOverlay, firmsStatsRef }) {
-  vis(map, ['firms-halo','firms-icon'], true);
+  vis(map, ['buffer-fill','buffer-line','buffer-label',
+            'firms-halo','firms-icon'], true);
   setOverlay({
     id: 'fires',
     title: 'Active Fire Alerts',
