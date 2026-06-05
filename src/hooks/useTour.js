@@ -252,7 +252,7 @@ async function phaseRiver({ go, ease, pause, map, setOverlay }) {
             'flood-halo','flood-icon',
             'firms-halo','firms-icon'], false);
 
-  // ── Diagonal flight — Bermejo intro ──────────────────────────────────────
+  // ── Diagonal flight + first straight — Bermejo intro (no filters) ────────
   setOverlay({
     id: 'river',
     title: 'The Bermejo River',
@@ -265,8 +265,10 @@ async function phaseRiver({ go, ease, pause, map, setOverlay }) {
     duration: 5000,
     easing: t => 1 - Math.pow(1 - t, 4),
   });
+  // First straight segment — still no filter, let the Bermejo text land
+  await ease({ center: [-61.75, -24.40], bearing: 288, zoom: 11.5, pitch: 67, duration: 10000, easing: t => t });
 
-  // ── Straight flight begins — Water Seasonality ───────────────────────────
+  // ── Water Seasonality ────────────────────────────────────────────────────
   await gswFadeIn(pause, map, 'gsw_seasonality-layer');
   setOverlay({
     id: 'river-seasonality',
@@ -274,7 +276,7 @@ async function phaseRiver({ go, ease, pause, map, setOverlay }) {
     subtitle: '1984–2021 · Global Surface Water',
     body: 'Water seasonality shows how many months per year surface water was present, averaged from 1984 to 2021. Light blue corresponds to 1 month per year, showing us the changing nature of the Bermejo.',
   });
-  await ease({ center: [-61.75, -24.40], bearing: 288, zoom: 11.5, pitch: 67, duration: 5000, easing: t => t });
+  await ease({ center: [-62.05, -24.25], bearing: 285, zoom: 11.5, pitch: 68, duration: 10000, easing: t => t });
 
   // ── Water Transitions ────────────────────────────────────────────────────
   await gswFadeOut(pause, map, 'gsw_seasonality-layer');
@@ -285,8 +287,7 @@ async function phaseRiver({ go, ease, pause, map, setOverlay }) {
     subtitle: '1984–2021 · Global Surface Water',
     body: 'The Bermejo river is alive, it pulses with every season. Light green, fuchsia and grey colors correspond to "New seasonal", "Lost seasonal" and "Ephemeral seasonal" correspondingly — showing us how each season creates new paths for life.',
   });
-  await ease({ center: [-62.05, -24.25], bearing: 285, zoom: 11.5, pitch: 68, duration: 5000, easing: t => t });
-  await ease({ center: [-62.34, -24.11], bearing: 280, zoom: 12.0, pitch: 68, duration: 4000, easing: t => t });
+  await ease({ center: [-62.34, -24.11], bearing: 280, zoom: 12.0, pitch: 68, duration: 8000, easing: t => t });
 
   // Fade out before turning to face pumps
   await gswFadeOut(pause, map, 'gsw_transitions-layer');
@@ -384,6 +385,7 @@ export function useTour(mapRef, { onComplete, firmsStats } = {}) {
   const goingBackTarget = useRef(-1);
   const onCompleteRef = useRef(onComplete);
   const firmsStatsRef = useRef(firmsStats);
+  const runFromPhaseRef = useRef(null);
 
   useEffect(() => { onCompleteRef.current = onComplete; });
   useEffect(() => { firmsStatsRef.current = firmsStats; });
@@ -465,13 +467,15 @@ export function useTour(mapRef, { onComplete, firmsStats } = {}) {
       onCompleteRef.current?.();
     } else if (goBackTo >= 0) {
       // Re-enter from the previous phase (tail-call, no setTimeout needed)
-      runFromPhase(goBackTo);
+      runFromPhaseRef.current(goBackTo);
     } else {
       // Skip / stopTour
       setTouring(false);
       setCanGoBack(false);
     }
   }, [mapRef, setLitPumps]);
+
+  useEffect(() => { runFromPhaseRef.current = runFromPhase; }, [runFromPhase]);
 
   const startTour = useCallback(() => runFromPhase(0), [runFromPhase]);
 
