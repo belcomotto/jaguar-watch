@@ -11,7 +11,7 @@ const INGJUAREZ_PATH = [
   { center: [-62.09833163, -24.07028979], bearing: 18.62, zoom: 12.4 },
   { center: [-62.01228711, -24.06188487], bearing: 18.60, zoom: 12.4 },
   { center: [-61.91771632, -23.98399245], bearing: 18.58, zoom: 13.4 },
-  { center: [-61.85584437, -23.90836973], bearing: 18.55, zoom: 13.4 },
+  { center: [-61.85584437, -23.90836973], bearing: 18.55, zoom: 13.4, pauseMs: 2000 },
 ];
 
 const LAGYEMA_PATH = [
@@ -21,8 +21,8 @@ const LAGYEMA_PATH = [
   { center: [-61.53069008, -24.35168566], bearing: 18.58, zoom: 10.4 },
   { center: [-61.49029973, -24.34412275], bearing: 18.56, zoom: 12.7 },
   { center: [-61.43645773, -24.35483572], bearing: 18.52, zoom: 11.5 },
-  { center: [-61.32971700, -24.34142759], bearing: 18.45, zoom: 10.4 },
-  { center: [-61.23888409, -24.26025878], bearing: 18.21, zoom:  8.5 },
+  { center: [-61.32971700, -24.34142759], bearing: 18.45, zoom: 10.4, pauseMs: 1500 },
+  { center: [-61.23888409, -24.26025878], bearing: 18.21, zoom:  8.5, pauseMs: 2000 },
 ];
 
 const PUMP_SEQUENCE = [
@@ -153,7 +153,7 @@ async function gswFadeOut(pause, map, layerId, steps = 14) {
   gswReset(map, layerId);
 }
 
-async function flyPath(ease, path, pitch = 38) {
+async function flyPath(ease, pause, path, pitch = 38) {
   for (const pt of path) {
     await ease({
       center: pt.center,
@@ -163,6 +163,7 @@ async function flyPath(ease, path, pitch = 38) {
       duration: 1500,
       easing: t => t,
     });
+    if (pt.pauseMs) await pause(pt.pauseMs);
   }
 }
 
@@ -368,7 +369,7 @@ async function phasePumps({ go, ease, pause, map, setOverlay, setLitPumps }) {
     setLitPumps([...lit]);
     setOverlay({ id: `pump-${i}`, ...pump });
     await pause(SHORT_PAUSE_INDICES.has(i) ? 1750 : 3500);
-    if (pump.path) await flyPath(ease, pump.path);
+    if (pump.path) await flyPath(ease, pause, pump.path);
   }
 }
 
