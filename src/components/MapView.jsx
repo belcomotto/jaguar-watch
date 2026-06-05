@@ -157,6 +157,12 @@ function pumpIcon(color) {
   });
 }
 
+const WATER_PATH_PUMPS = [
+  { coords: [-62.226627, -24.136969], sourceId: 'waterpath-ingjuarez',   file: '/data/waterpath_ingjuarez.geojson',   featureIdx: 0 },
+  { coords: [-61.687704, -24.367092], sourceId: 'waterpath-lagyema',     file: '/data/waterpath_lagyema.geojson',     featureIdx: 1 },
+  { coords: [-61.424589, -24.619062], sourceId: 'waterpath-wichipintado', file: '/data/waterpath_wichipintado.geojson', featureIdx: 2 },
+];
+
 export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON, mapbiomas, onIntroComplete }) {
   const containerRef = useRef(null);
   const onIntroCompleteRef = useRef(onIntroComplete);
@@ -316,7 +322,59 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
                   'icon-allow-overlap': true, 'icon-ignore-placement': true,
                   visibility: 'none' } });
 
+      // ── Water path interactive fade ───────────────────────────────────────
+      let activeWaterPathId = null;
+      let pumpJustClicked = false;
+
+      function fadeLineOpacity(layerId, targetOpacity, onDone) {
+        const from = map.getPaintProperty(layerId, 'line-opacity') ?? 0;
+        const dur = 600, t0 = Date.now();
+        if (targetOpacity > 0) map.setLayoutProperty(layerId, 'visibility', 'visible');
+        const step = () => {
+          const t = Math.min((Date.now() - t0) / dur, 1);
+          if (map.getLayer(layerId)) map.setPaintProperty(layerId, 'line-opacity', from + (targetOpacity - from) * t);
+          if (t < 1) requestAnimationFrame(step);
+          else {
+            if (targetOpacity === 0) map.setLayoutProperty(layerId, 'visibility', 'none');
+            onDone?.();
+          }
+        };
+        requestAnimationFrame(step);
+      }
+
+      async function showWaterPath(wp) {
+        const src = map.getSource(wp.sourceId);
+        if (!src) return;
+        const gj = await fetch(wp.file).then(r => r.json());
+        const coords = gj.features[wp.featureIdx]?.geometry?.coordinates;
+        if (coords) src.setData({ type: 'FeatureCollection', features: [
+          { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: coords } },
+        ]});
+        fadeLineOpacity(`${wp.sourceId}-layer`, 0.75);
+      }
+
+      function hideWaterPath(sourceId) {
+        fadeLineOpacity(`${sourceId}-layer`, 0, () => {
+          map.getSource(sourceId)?.setData({ type: 'FeatureCollection', features: [] });
+        });
+      }
+
       map.on('click', 'pumps-icon', (e) => {
+        pumpJustClicked = true;
+        const [lng, lat] = e.features[0].geometry.coordinates;
+        const wp = WATER_PATH_PUMPS.find(p =>
+          Math.abs(p.coords[0] - lng) < 0.001 && Math.abs(p.coords[1] - lat) < 0.001
+        );
+        if (wp) {
+          if (activeWaterPathId === wp.sourceId) {
+            hideWaterPath(wp.sourceId);
+            activeWaterPathId = null;
+          } else {
+            if (activeWaterPathId) hideWaterPath(activeWaterPathId);
+            activeWaterPathId = wp.sourceId;
+            showWaterPath(wp);
+          }
+        }
         const props = e.features[0].properties;
         new mapboxgl.Popup({ className: 'pump-popup', closeButton: false })
           .setLngLat(e.lngLat)
@@ -328,6 +386,16 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
           </div>`)
           .addTo(map);
       });
+
+      // Clicking anywhere else fades out the active water path
+      map.on('click', () => {
+        if (!pumpJustClicked && activeWaterPathId) {
+          hideWaterPath(activeWaterPathId);
+          activeWaterPathId = null;
+        }
+        pumpJustClicked = false;
+      });
+
       map.on('mouseenter', 'pumps-icon', () => { map.getCanvas().style.cursor = 'pointer'; });
       map.on('mouseleave', 'pumps-icon', () => { map.getCanvas().style.cursor = ''; });
 
@@ -488,6 +556,18 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
           'circle-stroke-color': '#fff8f0',
         },
       });
+
+      // ── Water path lines (hidden until tour activates) ───────────────────
+      for (const id of ['waterpath-ingjuarez', 'waterpath-lagyema', 'waterpath-wichipintado']) {
+        map.addSource(id, { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+        map.addLayer({
+          id: `${id}-layer`,
+          type: 'line',
+          source: id,
+          paint: { 'line-color': '#4db8ff', 'line-width': 2.5, 'line-opacity': 0.75 },
+          layout: { visibility: 'none' },
+        });
+      }
 
       if (skipIntro) {
         map.setMinZoom(6);

@@ -26,7 +26,7 @@ export default function TourOverlay({ step, onSkip, onBack, canGoBack, onForward
             <button className={styles.navBtn} onClick={onBack}>← Back</button>
           )}
           <button className={styles.navBtn} onClick={onPause}>
-            {paused ? '▶ Resume' : '⏸ Pause'}
+            {paused ? '▶' : '⏸'}
           </button>
           {canGoForward && (
             <button className={styles.navBtn} onClick={onForward}>Forward →</button>
@@ -36,6 +36,19 @@ export default function TourOverlay({ step, onSkip, onBack, canGoBack, onForward
       </div>
       <h3 className={styles.title}>{step.title}</h3>
       {step.subtitle && <p className={styles.subtitle}>{step.subtitle}</p>}
+      {(step.year != null || step.legend) && (
+        <div className={styles.legendRow}>
+          {step.year != null && (
+            <span className={styles.yearCounter}>{step.year}</span>
+          )}
+          {step.legend?.map(({ color, label }) => (
+            <span key={label} className={styles.legendItem}>
+              <span className={styles.dot} style={{ background: color }} />
+              <span className={styles.confLbl}>{label}</span>
+            </span>
+          ))}
+        </div>
+      )}
       <p className={styles.body}>{step.body}</p>
 
       {s && (

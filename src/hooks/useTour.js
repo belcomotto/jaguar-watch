@@ -25,6 +25,13 @@ const LAGYEMA_PATH = [
   { center: [-61.23888409, -24.26025878], bearing: 18.21, zoom:  8.5, pauseMs: 2000 },
 ];
 
+const WICHIPINTADO_PATH = [
+  { center: [-61.4259, -24.6199], bearing: 185 },
+  { center: [-61.4175, -24.6193], bearing: 255 },
+  { center: [-61.4270, -24.6580], bearing: 182 },
+  { center: [-61.4262, -24.6900], bearing: 180, pauseMs: 2000 },
+];
+
 const PUMP_SEQUENCE = [
   {
     coords: [-62.342466, -24.110932],
@@ -38,6 +45,10 @@ const PUMP_SEQUENCE = [
     subtitle: 'Big pump · Formosa',
     body: 'A large-scale draw for the town of Ingeniero Juárez — high-volume pumping, with nothing on record to offset the flow it removes.',
     path: INGJUAREZ_PATH,
+    waterPathLayer: 'waterpath-ingjuarez-layer',
+    waterPathFile: '/data/waterpath_ingjuarez.geojson',
+    waterPathFeatureIdx: 0,
+    waterPathZoomOut: { center: [-62.05, -24.02], zoom: 9.5, pitch: 20, bearing: 30 },
   },
   {
     coords: [-62.139708, -24.221221],
@@ -50,6 +61,7 @@ const PUMP_SEQUENCE = [
     title: 'Pump Tres Pozos',
     subtitle: 'Town pump · Chaco',
     body: 'Tres Pozos — one of a string of rural intakes threaded along the river\'s middle reach.',
+    flyZoom: 11.75,
   },
   {
     coords: [-61.687704, -24.367092],
@@ -57,6 +69,10 @@ const PUMP_SEQUENCE = [
     subtitle: 'Big pump · Formosa',
     body: 'A high-volume draw serving Laguna Yema, pressed against the park\'s buffer. As pasture and cropland spread here, the extractions stack up.',
     path: LAGYEMA_PATH,
+    waterPathLayer: 'waterpath-lagyema-layer',
+    waterPathFile: '/data/waterpath_lagyema.geojson',
+    waterPathFeatureIdx: 1,
+    waterPathZoomOut: { center: [-61.46, -24.31], zoom: 10.0, pitch: 20, bearing: 30 },
   },
   {
     coords: [-61.713700, -24.386666],
@@ -105,6 +121,11 @@ const PUMP_SEQUENCE = [
     title: 'Pump Wichí Pintado',
     subtitle: 'Town pump · Formosa',
     body: 'The farthest intake east: water for the Wichí community, downstream of the park.',
+    path: WICHIPINTADO_PATH,
+    waterPathLayer: 'waterpath-wichipintado-layer',
+    waterPathFile: '/data/waterpath_wichipintado.geojson',
+    waterPathFeatureIdx: 2,
+    waterPathZoomOut: { center: [-61.424, -24.655], zoom: 11.5, pitch: 15, bearing: 0 },
   },
 ];
 
@@ -153,9 +174,15 @@ async function gswFadeOut(pause, map, layerId, steps = 14) {
   gswReset(map, layerId);
 }
 
-async function flyPath(ease, pause, path, pitch = 38) {
-  for (const pt of path) {
-    await ease({
+async function flyPath(ease, pause, path, pitch = 38, lineAnim = null) {
+  const n = path.length;
+  // Monotonic cursor shared across all steps — only ever advances forward
+  let revealedIdx = 0;
+
+  for (let i = 0; i < n; i++) {
+    const pt = path[i];
+
+    const easePromise = ease({
       center: pt.center,
       zoom: 13.5,
       bearing: pt.bearing,
@@ -163,6 +190,37 @@ async function flyPath(ease, pause, path, pitch = 38) {
       duration: 1500,
       easing: t => t,
     });
+
+    if (lineAnim) {
+      const { map, sourceId, coords } = lineAnim;
+      const t0 = Date.now();
+      const loop = () => {
+        // Find the closest coord to the camera's current position,
+        // searching only forward so the cursor never snaps backward.
+        const { lng, lat } = map.getCenter();
+        let bestIdx = revealedIdx;
+        let minDist = Infinity;
+        for (let j = revealedIdx; j < coords.length; j++) {
+          const dx = coords[j][0] - lng;
+          const dy = coords[j][1] - lat;
+          const d = dx * dx + dy * dy;
+          if (d < minDist) { minDist = d; bestIdx = j; }
+        }
+        revealedIdx = bestIdx;
+        if (revealedIdx >= 1) {
+          const src = map.getSource(sourceId);
+          if (src) src.setData({
+            type: 'FeatureCollection',
+            features: [{ type: 'Feature', properties: {},
+              geometry: { type: 'LineString', coordinates: coords.slice(0, revealedIdx + 1) } }],
+          });
+        }
+        if (Date.now() - t0 < 1500) requestAnimationFrame(loop);
+      };
+      requestAnimationFrame(loop);
+    }
+
+    await easePromise;
     if (pt.pauseMs) await pause(pt.pauseMs);
   }
 }
@@ -261,7 +319,12 @@ async function phaseMapbiomas({ go, pause, map, setOverlay }) {
     id: 'mapbiomas',
     title: 'The Agricultural Frontier',
     subtitle: '1985–2023 · MapBiomas Gran Chaco',
-    body: 'Watch four decades collapse into seconds. In pink, the cropland; in yellow, the pasture — together,the agricultural frontier, closing in from every side between 1985 and 2023. As it advances, the Gran Chaco fractures into ever-smaller fragments, and El Impenetrable is left as the last oasis of dry forest still whole enough to shelter its wildlife. This is why it needs protecting: attacked on every front, it has become the final refuge in a landscape being pulled apart.',
+    year: 1985,
+    legend: [
+      { color: '#db4fba', label: 'Cropland' },
+      { color: '#ffd700', label: 'Pasture' },
+    ],
+    body: 'Watch four decades collapse into seconds. The agricultural frontier, closing in from every side and as it advances, the Gran Chaco fractures into ever-smaller fragments. El Impenetrable is left as the last oasis of dry forest still whole enough to shelter its wildlife. This is why it needs protecting: it has become the final refuge in a landscape being pulled apart.',
   });
 
   await pause(2500); // let first frame settle
@@ -270,6 +333,7 @@ async function phaseMapbiomas({ go, pause, map, setOverlay }) {
   for (let year = 1985; year <= 2023; year++) {
     const s = map.getSource('mapbiomas');
     if (s) s.updateImage({ url: `/data/mapbiomas/mapbiomas_${year}.png`, coordinates: MB_COORDS });
+    setOverlay(prev => ({ ...prev, year }));
     await pause(500);
   }
 
@@ -340,12 +404,28 @@ async function phasePumps({ go, ease, pause, map, setOverlay, setLitPumps }) {
   vis(map, ['park-fill','park-line','park-label',
             'buffer-fill','buffer-line','buffer-label',
             'flood-halo','flood-icon',
-            'firms-halo','firms-icon'], false);
+            'firms-halo','firms-icon',
+            'waterpath-ingjuarez-layer',
+            'waterpath-lagyema-layer',
+            'waterpath-wichipintado-layer'], false);
   gswReset(map, 'gsw_seasonality-layer');
   gswReset(map, 'gsw_transitions-layer');
   vis(map, ['pumps-icon','pumps-halo'], true);
   vis(map, ['overlay-place-labels'], true);
   setLitPumps([]);
+
+  // Pre-fetch all water path coords indexed by layer id
+  const waterLineCache = {};
+  for (const p of PUMP_SEQUENCE) {
+    if (p.waterPathFile && p.waterPathLayer) {
+      try {
+        const r = await fetch(p.waterPathFile);
+        const gj = await r.json();
+        waterLineCache[p.waterPathLayer] = gj.features[p.waterPathFeatureIdx ?? 0]?.geometry?.coordinates ?? null;
+      } catch { /* graceful fallback */ }
+    }
+  }
+
   setOverlay({
     id: 'pumps-intro',
     title: 'Illegal Extraction Sites',
@@ -360,7 +440,7 @@ async function phasePumps({ go, ease, pause, map, setOverlay, setLitPumps }) {
     const [lng, lat] = pump.coords;
     await go({
       center: [lng, lat],
-      zoom: 13.5, pitch: 70,
+      zoom: pump.flyZoom ?? 13.5, pitch: 70,
       bearing: (map.getBearing() + 30) % 360,
       duration: 2800,
       easing: t => 1 - Math.pow(1 - t, 3),
@@ -369,7 +449,31 @@ async function phasePumps({ go, ease, pause, map, setOverlay, setLitPumps }) {
     setLitPumps([...lit]);
     setOverlay({ id: `pump-${i}`, ...pump });
     await pause(SHORT_PAUSE_INDICES.has(i) ? 1750 : 3500);
-    if (pump.path) await flyPath(ease, pause, pump.path);
+    if (pump.path) {
+      if (pump.waterPathLayer) {
+        vis(map, [pump.waterPathLayer], true);
+        const sourceId = pump.waterPathLayer.replace('-layer', '');
+        const wlSrc = map.getSource(sourceId);
+        if (wlSrc) wlSrc.setData({ type: 'FeatureCollection', features: [] });
+      }
+      const sourceId = pump.waterPathLayer?.replace('-layer', '');
+      const lineAnim = (pump.waterPathLayer && waterLineCache[pump.waterPathLayer])
+        ? { map, sourceId, coords: waterLineCache[pump.waterPathLayer] }
+        : null;
+      await flyPath(ease, pause, pump.path, 38, lineAnim);
+      if (pump.waterPathLayer) {
+        // Zoom out to show the full water trace, then return to the river
+        const zo = pump.waterPathZoomOut;
+        await ease({
+          center: zo.center,
+          zoom: zo.zoom, pitch: zo.pitch, bearing: zo.bearing,
+          duration: 2000,
+          easing: t => 1 - Math.pow(1 - t, 3),
+        });
+        await pause(1800);
+        vis(map, [pump.waterPathLayer], false);
+      }
+    }
   }
 }
 
@@ -377,7 +481,10 @@ async function phaseGauges({ go, pause, map, setOverlay, setLitPumps }) {
   vis(map, ['pumps-icon','pumps-halo',
             'buffer-fill','buffer-line','buffer-label',
             'firms-halo','firms-icon',
-            'overlay-place-labels'], false);
+            'overlay-place-labels',
+            'waterpath-ingjuarez-layer',
+            'waterpath-lagyema-layer',
+            'waterpath-wichipintado-layer'], false);
   vis(map, ['park-fill','park-line','park-label'], true);
   setLitPumps([]);
   setOverlay(null);
