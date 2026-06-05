@@ -4,81 +4,81 @@ import { GAUGES, toGeoJSON } from '../data/floodGauges';
 const PUMP_SEQUENCE = [
   {
     coords: [-62.342466, -24.110932],
-    title: 'Toma Fortín Belgrano',
-    subtitle: 'Toma de pueblo · Chaco',
-    body: 'Municipal water intake at Fortín Belgrano. No environmental impact assessment on record for the current extraction volume.',
+    title: 'Pump Fortín Belgrano',
+    subtitle: 'Town pump · Chaco',
+    body: 'The first intake we reach. Fortín Belgrano\'s municipal supply draws from the river — with no environmental assessment on file for how much it now takes.',
   },
   {
     coords: [-62.226627, -24.136969],
-    title: 'Toma Ing. Juárez',
-    subtitle: 'Toma grande · Formosa',
-    body: 'Large-scale extraction serving the town of Ingeniero Juárez. High-volume pumping with no documented flow compensation measure.',
+    title: 'Pump Ing. Juárez',
+    subtitle: 'Big pump · Formosa',
+    body: 'A large-scale draw for the town of Ingeniero Juárez — high-volume pumping, with nothing on record to offset the flow it removes.',
   },
   {
     coords: [-62.139708, -24.221221],
-    title: 'Toma Tartagal',
-    subtitle: 'Toma de pueblo · Chaco',
-    body: 'Community intake serving the settlement of Tartagal on the Bermejo\'s south bank.',
+    title: 'Pump Tartagal',
+    subtitle: 'Town pump · Chaco',
+    body: 'A community intake for Tartagal, set on the river\'s south bank.',
   },
   {
     coords: [-61.864300, -24.313128],
-    title: 'Toma Tres Pozos',
-    subtitle: 'Toma de pueblo · Chaco',
-    body: 'Extraction point at Tres Pozos — one of several rural intakes in the mid-Bermejo corridor.',
+    title: 'Pump Tres Pozos',
+    subtitle: 'Town pump · Chaco',
+    body: 'Tres Pozos — one of a string of rural intakes threaded along the river\'s middle reach.',
   },
   {
     coords: [-61.687704, -24.367092],
-    title: 'Toma Laguna Yema',
-    subtitle: 'Toma grande · Formosa',
-    body: 'High-volume extraction serving Laguna Yema. Located near the park\'s eastern buffer, raising cumulative extraction concernsdue to the pasture and agricultural growth of the area.',
+    title: 'Pump Laguna Yema',
+    subtitle: 'Big pump · Formosa',
+    body: 'A high-volume draw serving Laguna Yema, pressed against the park\'s buffer. As pasture and cropland spread here, the extractions stack up.',
   },
   {
     coords: [-61.713700, -24.386666],
-    title: 'Tomita',
-    subtitle: 'Toma pequeña · Chaco',
-    body: 'Unregistered small-scale pump. No permit or municipal association on record.',
+    title: 'Small Pump',
+    subtitle: 'Small pump · Chaco',
+    body: 'An unregistered pump. No permit, no record of who runs it.',
   },
   {
     coords: [-61.701468, -24.407747],
-    title: 'Extracción sin registro',
-    subtitle: 'Toma pequeña · Chaco',
-    body: 'Informal extraction point — part of a cluster of undocumented diversions in this reach.',
+    title: 'Non-registered extraction',
+    subtitle: 'Small pump · Chaco',
+    body: 'An informal draw — one of a cluster of undocumented diversions crowded into this bend.',
   },
   {
     coords: [-61.691121, -24.415603],
-    title: 'Toma Sauzalito',
-    subtitle: 'Toma de pueblo · Chaco',
-    body: 'Municipal intake for Sauzalito — the main town on this stretch of the Bermejo within Chaco province.',
+    title: 'Pump Sauzalito',
+    subtitle: 'Town pump · Chaco',
+    body: 'Sauzalito\'s municipal intake — the largest town on this Chaco stretch of the river.',
   },
   {
     coords: [-61.610063, -24.446073],
-    title: 'Toma 2',
-    subtitle: 'Toma pequeña · Chaco',
-    body: 'Small unregistered pump identified during field verification. No operational records available.',
+    title: 'Pump 2',
+    subtitle: 'Small pump · Chaco',
+    body: 'An unregistered pump, found only by field survey. No records exist.',
   },
   {
     coords: [-61.601205, -24.436692],
-    title: 'Toma 3',
-    subtitle: 'Toma pequeña · Chaco',
-    body: 'Informal extraction point near the lower buffer zone reach.',
+    title: 'Pump 3',
+    subtitle: 'Small pump · Chaco',
+    body: 'Another informal draw, low on the buffer\'s reach.',
   },
   {
     coords: [-61.583446, -24.460207],
-    title: 'Toma Sumayen',
-    subtitle: 'Toma de pueblo · Chaco',
-    body: 'Documented intake at the Indigenous community of Sumayen. Water access for subsistence, though extraction volumes are unmonitored.',
+    title: 'Pump Sumayen',
+    subtitle: 'Town pump · Chaco',
+    body: 'Subsistence water for the Indigenous community of Sumayen — drawn, but unmeasured.',
   },
   {
     coords: [-61.589357, -24.488601],
-    title: 'Toma 5',
-    subtitle: 'Toma pequeña · Chaco',
-    body: 'Unregistered pump at the convergence of a secondary channel and the main Bermejo course.',
+    title: 'Pump 5',
+    subtitle: 'Small pump · Chaco',
+    body: 'An unregistered pump where a side channel rejoins the main river.',
   },
   {
     coords: [-61.424589, -24.619062],
-    title: 'Toma Wichí Pintado',
-    subtitle: 'Toma de pueblo · Formosa',
-    body: 'Easternmost documented extraction point, serving the Wichí community downstream from the park\'s eastern boundary.',
+    title: 'Pump Wichí Pintado',
+    subtitle: 'Town pump · Formosa',
+    body: 'The farthest intake east: water for the Wichí community, downstream of the park.',
   },
 ];
 
@@ -169,7 +169,7 @@ async function phaseBuffer({ go, ease, map, setOverlay }) {
     id: 'buffer',
     title: 'Buffer Zone',
     subtitle: 'Monitoring Corridor',
-    body: 'The expanded perimeter covers the areas where deforestation pressure and agricultural encroachment are most acute.',
+    body: 'Beyond the park\'s edge lies its cushion. Developing a Buffer Area alongside local communities is what could help to mitigate the pressure from outside, giving the wildlife that shelters in the park room to roam, breed and move safely. ',
   });
   await go({
     center: [-60.9, -24.6],
@@ -221,7 +221,7 @@ async function phaseMapbiomas({ go, pause, map, setOverlay }) {
     id: 'mapbiomas',
     title: 'The Agricultural Frontier',
     subtitle: '1985–2023 · MapBiomas Gran Chaco',
-    body: 'Thirty-eight years of land-cover transformation across the Gran Chaco. The agricultural frontier has advanced aggressively from every direction — compressing the habitat available for jaguars, giant anteaters, and the communities who depend on it. El Impenetrable has become an ecological oasis: a last refuge in a landscape under siege, where logging of key species and poaching are high-probability occurrences at its margins.',
+    body: 'Watch four decades collapse into seconds. In pink, the cropland; in yellow, the pasture — together,the agricultural frontier, closing in from every side between 1985 and 2023. As it advances, the Gran Chaco fractures into ever-smaller fragments, and El Impenetrable is left as the last oasis of dry forest still whole enough to shelter its wildlife. This is why it needs protecting: attacked on every front, it has become the final refuge in a landscape being pulled apart.',
   });
 
   await pause(2500); // let first frame settle
@@ -257,7 +257,7 @@ async function phaseRiver({ go, ease, pause, map, setOverlay }) {
     id: 'river',
     title: 'The Bermejo River',
     subtitle: null,
-    body: 'The Bermejo — known here by its older name, the Teuco — winds more than 1,000 km of restless, shifting channels along the park'/s northern edge. We follow it upstream, west, to the first place where its water is being drawn.',
+    body: 'The Bermejo — known here by its older name, the Teuco — winds more than 1,000 km of restless, shifting channels along the park\'s northern edge. We follow it upstream, west, to the first place where its water is being drawn.',
   });
   await go({
     center: [-61.25, -24.52],
@@ -310,7 +310,7 @@ async function phasePumps({ go, pause, map, setOverlay, setLitPumps }) {
     id: 'pumps-intro',
     title: 'Illegal Extraction Sites',
     subtitle: null,
-    body: '13 unauthorised pump operations documented along the Bermejo — extracting water for agriculture beyond the park\'s eastern boundary.',
+    body: 'Thirteen points along the river draw its water — some are registered town and community supplies,others are unregistered pumps feeding cattle pasture and crops. Together they tap the same artery the park and its biodiversity depend on, with little or no monitoring of how much is taken — or what it leaves behind.',
   });
   await pause(2500);
 
@@ -356,7 +356,7 @@ async function phaseGauges({ go, pause, map, setOverlay, setLitPumps }) {
     id: 'gauges',
     title: 'Flood Monitoring',
     subtitle: 'GloFAS · Copernicus Emergency Management',
-    body: 'River level stations across the Bermejo–Paraná basin, monitored in near real-time by the Global Flood Awareness System. The Bermejo\'s sediment load makes it one of South America\'s most flood-prone corridors.',
+    body: 'The river is restless. These stations track its rising and falling across the Bermejo–Paraná basin, watched in near real-time from orbit. Carrying one of the heaviest sediment loads on the continent,the Bermejo floods hard and often — remaking its own course as it goes.',
   });
   await pause(5500);
 }
@@ -368,7 +368,7 @@ async function phaseFires({ pause, map, setOverlay, firmsStatsRef }) {
     id: 'fires',
     title: 'Active Fire Alerts',
     subtitle: 'NASA FIRMS · VIIRS S-NPP + NOAA-20 + NOAA-21',
-    body: 'Near real-time thermal anomalies updated every ~3 hours. Many fires in the Chaco are intentional — burning pasture to expand the agricultural frontier into protected areas.',
+    body: 'Each point is a fire, caught from orbit and refreshed every 3 hours. In the Chaco, many are set on purpose — pasture burned to push the frontier deeper, sometimes right to the doorstep of protected land. The siege we began with, still burning.',
     stats: firmsStatsRef.current,
   });
   await pause(5500);
