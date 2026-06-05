@@ -1,6 +1,30 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { GAUGES, toGeoJSON } from '../data/floodGauges';
 
+const INGJUAREZ_PATH = [
+  { center: [-62.22304284, -24.13589335], bearing: 18.65, zoom: 14.4 },
+  { center: [-62.22262236, -24.13343552], bearing: 18.65, zoom: 14.4 },
+  { center: [-62.25242520, -24.11361759], bearing: 18.66, zoom: 14.9 },
+  { center: [-62.25071486, -24.11091132], bearing: 18.66, zoom: 13.7 },
+  { center: [-62.21873361, -24.10529296], bearing: 18.66, zoom: 11.4 },
+  { center: [-62.17548839, -24.09745275], bearing: 18.63, zoom: 12.5 },
+  { center: [-62.09833163, -24.07028979], bearing: 18.62, zoom: 12.4 },
+  { center: [-62.01228711, -24.06188487], bearing: 18.60, zoom: 12.4 },
+  { center: [-61.91771632, -23.98399245], bearing: 18.58, zoom: 13.4 },
+  { center: [-61.85584437, -23.90836973], bearing: 18.55, zoom: 13.4 },
+];
+
+const LAGYEMA_PATH = [
+  { center: [-61.66252513, -24.35723653], bearing: 18.67, zoom: 10.9 },
+  { center: [-61.64789872, -24.35825307], bearing: 18.65, zoom: 12.4 },
+  { center: [-61.59427813, -24.37288856], bearing: 18.62, zoom: 10.6 },
+  { center: [-61.53069008, -24.35168566], bearing: 18.58, zoom: 10.4 },
+  { center: [-61.49029973, -24.34412275], bearing: 18.56, zoom: 12.7 },
+  { center: [-61.43645773, -24.35483572], bearing: 18.52, zoom: 11.5 },
+  { center: [-61.32971700, -24.34142759], bearing: 18.45, zoom: 10.4 },
+  { center: [-61.23888409, -24.26025878], bearing: 18.21, zoom:  8.5 },
+];
+
 const PUMP_SEQUENCE = [
   {
     coords: [-62.342466, -24.110932],
@@ -13,6 +37,7 @@ const PUMP_SEQUENCE = [
     title: 'Pump Ing. Juárez',
     subtitle: 'Big pump · Formosa',
     body: 'A large-scale draw for the town of Ingeniero Juárez — high-volume pumping, with nothing on record to offset the flow it removes.',
+    path: INGJUAREZ_PATH,
   },
   {
     coords: [-62.139708, -24.221221],
@@ -31,6 +56,7 @@ const PUMP_SEQUENCE = [
     title: 'Pump Laguna Yema',
     subtitle: 'Big pump · Formosa',
     body: 'A high-volume draw serving Laguna Yema, pressed against the park\'s buffer. As pasture and cropland spread here, the extractions stack up.',
+    path: LAGYEMA_PATH,
   },
   {
     coords: [-61.713700, -24.386666],
@@ -127,6 +153,19 @@ async function gswFadeOut(pause, map, layerId, steps = 14) {
   gswReset(map, layerId);
 }
 
+async function flyPath(ease, path, pitch = 38) {
+  for (const pt of path) {
+    await ease({
+      center: pt.center,
+      zoom: pt.zoom,
+      bearing: pt.bearing,
+      pitch,
+      duration: 1500,
+      easing: t => t,
+    });
+  }
+}
+
 // ── Phase functions ────────────────────────────────────────────────────────
 // Each phase is self-contained: resets relevant layers, sets overlay, animates.
 
@@ -142,7 +181,7 @@ async function phasePark({ go, ease, map, setOverlay }) {
     id: 'park',
     title: 'El Impenetrable',
     subtitle: 'National Park',
-    body: ' Here, 128,000 hectares of dry Chaco forest stretch to the horizon — knotted quebracho, palo santo and algarrobo so dense and thorny they gave this land its name: the Impenetrable. Protected by national law in 2014, it waited until 2017 for the first rangers to set foot inside. Ancient wilderness — only newly defended.',
+    body: ' Here, 128,000 hectares of dry Chaco forest stretch to the horizon — knotted quebracho, palo santo and algarrobo so dense and thorny they gave this land its name: the Impenetrable. Protected by national law in 2014, in 2017 the first rangers sat foot inside. Ancient wilderness — only newly defended.',
   });
   // Dive to ground level at park centre
   await go({
@@ -154,7 +193,7 @@ async function phasePark({ go, ease, map, setOverlay }) {
   // Pull back slowly to reveal the park polygon
   await ease({
     zoom: 8.5, pitch: 42, bearing: 20,
-    duration: 7000,
+    duration: 8000,
     easing: t => t,
   });
 }
@@ -296,7 +335,7 @@ async function phaseRiver({ go, ease, pause, map, setOverlay }) {
   await ease({ bearing: 100, zoom: 13.5, pitch: 72, duration: 3500, easing: t => 1 - Math.pow(1 - t, 3) });
 }
 
-async function phasePumps({ go, pause, map, setOverlay, setLitPumps }) {
+async function phasePumps({ go, ease, pause, map, setOverlay, setLitPumps }) {
   vis(map, ['park-fill','park-line','park-label',
             'buffer-fill','buffer-line','buffer-label',
             'flood-halo','flood-icon',
@@ -329,6 +368,7 @@ async function phasePumps({ go, pause, map, setOverlay, setLitPumps }) {
     setLitPumps([...lit]);
     setOverlay({ id: `pump-${i}`, ...pump });
     await pause(SHORT_PAUSE_INDICES.has(i) ? 1750 : 3500);
+    if (pump.path) await flyPath(ease, pump.path);
   }
 }
 
