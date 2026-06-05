@@ -157,7 +157,7 @@ async function flyPath(ease, path, pitch = 38) {
   for (const pt of path) {
     await ease({
       center: pt.center,
-      zoom: pt.zoom,
+      zoom: 13.5,
       bearing: pt.bearing,
       pitch,
       duration: 1500,
