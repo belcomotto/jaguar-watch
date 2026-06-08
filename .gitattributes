@@ -1,0 +1,2 @@
+public/media/*.jpg filter=lfs diff=lfs merge=lfs -text
+public/media/*.mov filter=lfs diff=lfs merge=lfs -text
