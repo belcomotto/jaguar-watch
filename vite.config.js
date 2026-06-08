@@ -10,19 +10,26 @@ export default defineConfig(({ mode }) => {
       chunkSizeWarningLimit: 2500,
     },
     server: {
-      proxy: {
-        '/api/firms': {
-          target: 'https://firms.modaps.eosdis.nasa.gov',
-          changeOrigin: true,
-          secure: true,
-          rewrite: (path) => {
-            const u = new URL(path, 'http://x')
-            const product = u.searchParams.get('product')
-            const bbox    = u.searchParams.get('bbox')
-            const days    = u.searchParams.get('days')
-            return `/api/area/csv/${env.VITE_FIRMS_KEY}/${product}/${bbox}/${days}`
-          },
-        },
+      configureServer(server) {
+        server.middlewares.use('/api/firms', async (req, res) => {
+          const u = new URL(req.url, 'http://x')
+          const product = u.searchParams.get('product')
+          const bbox    = u.searchParams.get('bbox')
+          const days    = u.searchParams.get('days')
+          const key     = env.VITE_FIRMS_KEY
+          try {
+            const upstream = await fetch(
+              `https://firms.modaps.eosdis.nasa.gov/api/area/csv/${key}/${product}/${bbox}/${days}`
+            )
+            const text = await upstream.text()
+            res.setHeader('Content-Type', 'text/csv; charset=utf-8')
+            res.statusCode = upstream.status
+            res.end(text)
+          } catch {
+            res.statusCode = 502
+            res.end(JSON.stringify({ error: 'Failed to fetch FIRMS data' }))
+          }
+        })
       },
     },
   }

@@ -43,7 +43,7 @@ export default function App() {
   const [tourPhase, setTourPhase] = useState(null);
   const [activeTab, setActiveTab] = useState(null);
   const [layers, setLayers] = useState(DEFAULT_LAYERS);
-  const [sentinel, setSentinel] = useState({
+  const [sentinel] = useState({
     enabled: false,
     band: 'true-color',
     date: INITIAL_DATE,
@@ -108,8 +108,6 @@ export default function App() {
         <Sidebar
           layers={layers}
           setLayers={setLayers}
-          sentinel={sentinel}
-          setSentinel={setSentinel}
           mapbiomas={mapbiomas}
           setMapbiomas={setMapbiomas}
         />

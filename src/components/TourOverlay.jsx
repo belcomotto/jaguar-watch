@@ -1,5 +1,29 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styles from './TourOverlay.module.css';
+
+function Slideshow({ images }) {
+  const [cur, setCur] = useState(0);
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    setCur(0);
+    setTick(0);
+    const id = setInterval(() => {
+      setCur(i => (i + 1) % images.length);
+      setTick(t => t + 1);
+    }, 1000);
+    return () => clearInterval(id);
+  }, [images]);
+
+  const prev = (cur - 1 + images.length) % images.length;
+
+  return (
+    <div className={styles.slideshowBox}>
+      {tick > 0 && <img src={images[prev]} className={styles.slideImgBg} alt="" />}
+      <img key={tick} src={images[cur]} className={styles.slideImgFg} alt="" />
+    </div>
+  );
+}
 
 export default function TourOverlay({ step, onSkip, onBack, canGoBack, onForward, canGoForward, onPause, paused }) {
   const cardRef = useRef(null);
@@ -34,8 +58,10 @@ export default function TourOverlay({ step, onSkip, onBack, canGoBack, onForward
           <button className={styles.exitBtn} onClick={onSkip}>Exit ✕</button>
         </div>
       </div>
-      <h3 className={styles.title}>{step.title}</h3>
+
+      {step.title && <h3 className={styles.title}>{step.title}</h3>}
       {step.subtitle && <p className={styles.subtitle}>{step.subtitle}</p>}
+
       {(step.year != null || step.legend) && (
         <div className={styles.legendRow}>
           {step.year != null && (
@@ -49,7 +75,30 @@ export default function TourOverlay({ step, onSkip, onBack, canGoBack, onForward
           ))}
         </div>
       )}
-      <p className={styles.body}>{step.body}</p>
+
+      {step.body && <p className={styles.body}>{step.body}</p>}
+
+      {step.video && (
+        <div className={styles.mediaBox}>
+          <video src={step.video} autoPlay loop muted playsInline className={styles.mediaImg} />
+        </div>
+      )}
+      {step.images && !step.video && <Slideshow images={step.images} />}
+      {step.imageStack && (
+        <>
+          {step.imageStack.map((src, i) => (
+            <div key={i} className={styles.mediaBox} style={i > 0 ? { marginTop: 4 } : {}}>
+              <img src={src} className={styles.mediaImg} alt="" />
+            </div>
+          ))}
+        </>
+      )}
+      {step.image && !step.images && !step.imageStack && !step.video && (
+        <div className={styles.mediaBox}>
+          <img src={step.image} className={styles.mediaImg} alt="" />
+        </div>
+      )}
+      {step.caption && <p className={styles.caption}>{step.caption}</p>}
 
       {s && (
         <div className={styles.statsBlock}>

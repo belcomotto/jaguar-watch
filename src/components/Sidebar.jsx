@@ -3,34 +3,6 @@ import styles from './Sidebar.module.css';
 import { STATUS_COLORS, STATUS_LABELS } from '../data/floodGauges';
 import MapBiomasPanel from './MapBiomasPanel';
 
-const SENTINEL_BANDS = [
-  { id: 'true-color',           label: 'True Color' },
-  { id: 'ndvi',                 label: 'NDVI' },
-  { id: 'ndwi',                 label: 'NDWI' },
-  { id: 'moisture-index',       label: 'Moisture' },
-  { id: 'scene-classification', label: 'Scene Class.' },
-];
-
-function buildMonths() {
-  const months = [];
-  const now = new Date();
-  let y = 2015, m = 6;
-  while (y < now.getFullYear() || (y === now.getFullYear() && m <= now.getMonth() + 1)) {
-    months.push(`${y}-${String(m).padStart(2, '0')}`);
-    m++;
-    if (m > 12) { m = 1; y++; }
-  }
-  return months;
-}
-
-const MONTHS = buildMonths();
-
-function formatDateLabel(dateStr) {
-  const [y, m] = dateStr.split('-');
-  return new Date(parseInt(y), parseInt(m) - 1).toLocaleDateString('en-GB', {
-    month: 'short', year: 'numeric',
-  });
-}
 
 const LAYER_INFO = {
   firms: {
@@ -71,36 +43,6 @@ const LAYER_INFO = {
 // Legacy alias — GSW_INFO kept as reference for existing code
 const GSW_INFO = LAYER_INFO;
 
-const LAYER_GROUPS = [
-  {
-    label: 'Protected Areas',
-    layers: [
-      { id: 'park',   label: 'National Park',            color: '#ffffff', desc: 'El Impenetrable, designated 2020' },
-      { id: 'buffer', label: 'Buffer / Monitoring Zone', color: '#ffffff', desc: 'Expanded monitoring area', dashed: true },
-    ],
-  },
-  {
-    label: 'Illegal Extraction',
-    layers: [
-      { id: 'pumps', label: 'Illegal Pump Sites', color: '#63412F', desc: '13 documented sites on the Bermejo' },
-    ],
-  },
-  {
-    label: 'Fire Monitoring',
-    sublabel: 'NASA FIRMS · VIIRS S-NPP · 5 days',
-    layers: [
-      { id: 'firms', label: 'Active Fire Alerts', color: '#ff4400', gsw: true },
-    ],
-  },
-  {
-    label: 'Global Surface Water',
-    sublabel: 'JRC / Copernicus · 1984–2021',
-    layers: [
-      { id: 'gsw_seasonality', label: 'Water Seasonality', color: '#5dacc8', gsw: true },
-      { id: 'gsw_transitions', label: 'Water Transitions', color: '#ff7f27', gsw: true },
-    ],
-  },
-];
 
 function GswLayerRow({ layer, active, onToggle }) {
   const [open, setOpen] = useState(false);
@@ -154,81 +96,51 @@ function LayerRow({ layer, active, onToggle }) {
   );
 }
 
-function SentinelPanel({ sentinel, setSentinel }) {
-  const monthIndex = MONTHS.indexOf(sentinel.date);
-  return (
-    <div className={styles.sentinelPanel}>
-      <div className={styles.sentinelHeader}>
-        <button
-          className={`${styles.sentinelToggle} ${sentinel.enabled ? styles.sentinelToggleOn : ''}`}
-          onClick={() => setSentinel(s => ({ ...s, enabled: !s.enabled }))}
-        >
-          {sentinel.enabled ? 'On' : 'Off'}
-        </button>
-        <span className={styles.sentinelStatus}>
-          Sentinel-2 L2A · locally cached
-        </span>
-      </div>
-      <div className={styles.bandGrid}>
-        {SENTINEL_BANDS.map(b => (
-          <button
-            key={b.id}
-            className={`${styles.bandBtn} ${sentinel.band === b.id ? styles.bandBtnActive : ''}`}
-            onClick={() => setSentinel(s => ({ ...s, band: b.id }))}
-            disabled={!sentinel.enabled}
-          >
-            {b.label}
-          </button>
-        ))}
-      </div>
-      <div className={styles.timeSlider}>
-        <div className={styles.timeLabel}>
-          <span className={styles.timeLabelDate}>{formatDateLabel(sentinel.date)}</span>
-          <span className={styles.timeLabelSub}>max 30% cloud cover</span>
-        </div>
-        <input
-          type="range"
-          min={0}
-          max={MONTHS.length - 1}
-          value={monthIndex}
-          disabled={!sentinel.enabled}
-          onChange={e => setSentinel(s => ({ ...s, date: MONTHS[+e.target.value] }))}
-          className={styles.timeRange}
-        />
-        <div className={styles.timeEndLabels}>
-          <span>Jan 2015</span>
-          <span>{formatDateLabel(MONTHS[MONTHS.length - 1])}</span>
-        </div>
-      </div>
-    </div>
-  );
-}
 
-export default function Sidebar({ layers, setLayers, sentinel, setSentinel, mapbiomas, setMapbiomas }) {
+export default function Sidebar({ layers, setLayers, mapbiomas, setMapbiomas }) {
   const toggleLayer = (id) => setLayers(prev => ({ ...prev, [id]: !prev[id] }));
 
   return (
     <aside className={styles.sidebar}>
       <div className={styles.panelScroll}>
 
-        {LAYER_GROUPS.map(group => (
-          <div key={group.label} className={styles.layerGroup}>
-            <div className={styles.groupHeader}>
-              <span className={styles.groupLabel}>{group.label}</span>
-              {group.sublabel && <span className={styles.groupSub}>{group.sublabel}</span>}
-            </div>
-            {group.layers.map(layer =>
-              layer.gsw ? (
-                <GswLayerRow key={layer.id} layer={layer}
-                  active={layers[layer.id]} onToggle={toggleLayer} />
-              ) : (
-                <LayerRow key={layer.id} layer={layer}
-                  active={layers[layer.id]} onToggle={toggleLayer} />
-              )
-            )}
+        {/* 1 — Protected Areas */}
+        <div className={styles.layerGroup}>
+          <div className={styles.groupHeader}>
+            <span className={styles.groupLabel}>Protected Areas</span>
           </div>
-        ))}
+          <LayerRow layer={{ id: 'park',   label: 'National Park',            color: '#ffffff', desc: 'El Impenetrable, designated 2020' }}       active={layers.park}   onToggle={toggleLayer} />
+          <LayerRow layer={{ id: 'buffer', label: 'Buffer / Monitoring Zone', color: '#ffffff', desc: 'Expanded monitoring area', dashed: true }} active={layers.buffer} onToggle={toggleLayer} />
+        </div>
 
+        {/* 2 — Land Cover / MapBiomas */}
+        <div className={styles.layerGroup}>
+          <div className={styles.groupHeader}>
+            <span className={styles.groupLabel}>Land Cover</span>
+            <span className={styles.groupSub}>MapBiomas · Gran Chaco</span>
+          </div>
+          <MapBiomasPanel mapbiomas={mapbiomas} setMapbiomas={setMapbiomas} />
+        </div>
+
+        {/* 3 — Global Surface Water */}
+        <div className={styles.layerGroup}>
+          <div className={styles.groupHeader}>
+            <span className={styles.groupLabel}>Global Surface Water</span>
+            <span className={styles.groupSub}>JRC / Copernicus · 1984–2021</span>
+          </div>
+          <GswLayerRow layer={{ id: 'gsw_seasonality', label: 'Water Seasonality', color: '#5dacc8', gsw: true }} active={layers.gsw_seasonality} onToggle={toggleLayer} />
+          <GswLayerRow layer={{ id: 'gsw_transitions', label: 'Water Transitions', color: '#ff7f27', gsw: true }} active={layers.gsw_transitions} onToggle={toggleLayer} />
+        </div>
+
+        {/* 4 — Illegal Extraction */}
+        <div className={styles.layerGroup}>
+          <div className={styles.groupHeader}>
+            <span className={styles.groupLabel}>Illegal Extraction</span>
+          </div>
+          <LayerRow layer={{ id: 'pumps', label: 'Illegal Pump Sites', color: '#63412F', desc: '13 documented sites on the Bermejo' }} active={layers.pumps} onToggle={toggleLayer} />
+        </div>
+
+        {/* 5 — Flood Monitoring */}
         <div className={styles.layerGroup}>
           <div className={styles.groupHeader}>
             <span className={styles.groupLabel}>Flood Monitoring</span>
@@ -255,20 +167,13 @@ export default function Sidebar({ layers, setLayers, sentinel, setSentinel, mapb
           )}
         </div>
 
+        {/* 6 — Fire Monitoring */}
         <div className={styles.layerGroup}>
           <div className={styles.groupHeader}>
-            <span className={styles.groupLabel}>Land Cover</span>
-            <span className={styles.groupSub}>MapBiomas · Gran Chaco</span>
+            <span className={styles.groupLabel}>Fire Monitoring</span>
+            <span className={styles.groupSub}>NASA FIRMS · VIIRS S-NPP · 5 days</span>
           </div>
-          <MapBiomasPanel mapbiomas={mapbiomas} setMapbiomas={setMapbiomas} />
-        </div>
-
-        <div className={styles.layerGroup}>
-          <div className={styles.groupHeader}>
-            <span className={styles.groupLabel}>Sentinel-2 Imagery</span>
-            <span className={styles.groupSub}>Copernicus · 2015–present</span>
-          </div>
-          <SentinelPanel sentinel={sentinel} setSentinel={setSentinel} />
+          <GswLayerRow layer={{ id: 'firms', label: 'Active Fire Alerts', color: '#ff4400', gsw: true }} active={layers.firms} onToggle={toggleLayer} />
         </div>
 
         <div className={styles.legend}>

@@ -12,14 +12,40 @@
 }
 
 .card {
+  display: flex;
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
   border-radius: 6px;
-  padding: 44px 52px 40px;
-  max-width: 520px;
+  max-width: 1060px;
   width: calc(100% - 48px);
+  max-height: calc(100vh - 80px);
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.40);
   animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  overflow: hidden;
+}
+
+/* ── Left video column ────────────────────────────────────────────────────── */
+.videoCol {
+  width: 520px;
+  flex-shrink: 0;
+  background: #000;
+  border-radius: 6px 0 0 6px;
+  overflow: hidden;
+}
+
+.introVideo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ── Right content column ─────────────────────────────────────────────────── */
+.contentCol {
+  flex: 1;
+  padding: 44px 52px 40px;
+  min-width: 0;
+  overflow-y: auto;
 }
 
 .eyebrow {
