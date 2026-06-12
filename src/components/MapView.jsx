@@ -1141,16 +1141,22 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
       .addTo(map);
   }, [actPin, mapRef]);
 
-  // Push community GeoJSON into the map source
+  // Push community GeoJSON into the map source.
+  // Cannot use isStyleLoaded() here — communityGeoJSON starts non-null so the
+  // effect fires before the map loads, queuing map.once('load'). When the fetch
+  // later resolves, isStyleLoaded() may still return false mid-render and queue
+  // another once('load') that never fires. Instead check if the source exists.
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !communityGeoJSON) return;
-    const apply = () => {
-      const src = map.getSource('community');
-      console.log('[community] setData features:', communityGeoJSON.features.length, communityGeoJSON.features[0]?.geometry?.coordinates);
-      if (src) src.setData(communityGeoJSON);
-    };
-    if (map.isStyleLoaded()) apply(); else map.once('load', apply);
+    if (!map) return;
+    const src = map.getSource('community');
+    if (src) {
+      src.setData(communityGeoJSON);
+    } else {
+      map.once('load', () => {
+        map.getSource('community')?.setData(communityGeoJSON);
+      });
+    }
   }, [communityGeoJSON, mapRef]);
 
   // Sync borders / place-label overlay visibility
