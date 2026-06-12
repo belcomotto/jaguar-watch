@@ -37,7 +37,10 @@ export default function AnalyzeView({ firmsRows, firmsLoading, firmsError, firms
         {/* ── Sentinel-2 ── */}
         <div className={styles.card}>
           <div className={styles.cardHead}>
-            <span className={styles.cardTitle}>Satellite Monitoring</span>
+            <div className={styles.cardTitleRow}>
+              <span className={styles.cardTitle}>Satellite Monitoring</span>
+              <a href="https://browser.dataspace.copernicus.eu/?zoom=5&lat=50.16282&lng=20.78613&themeId=DEFAULT-THEME&demSource3D=%22MAPZEN%22&cloudCoverage=30&dateMode=SINGLE" target="_blank" rel="noreferrer" className={styles.cardLink}>↗ Open Copernicus Browser</a>
+            </div>
             <span className={styles.cardSub}>ESA Copernicus · Sentinel-2 L2A · 10 m resolution</span>
           </div>
           <div className={styles.cardBody}>
@@ -52,7 +55,10 @@ export default function AnalyzeView({ firmsRows, firmsLoading, firmsError, firms
         {/* ── MapBiomas Land Cover ── */}
         <div className={styles.card}>
           <div className={styles.cardHead}>
-            <span className={styles.cardTitle}>Land Cover Change</span>
+            <div className={styles.cardTitleRow}>
+              <span className={styles.cardTitle}>Land Cover Change</span>
+              <a href="https://plataforma.mapbiomas.org/coverage/coverage_lclu?tl[id]=1&tl[themeKey]=coverage&tl[subthemeKey]=coverage_lclu&tl[pixelValues][]=3&tl[pixelValues][]=4&tl[pixelValues][]=45&tl[pixelValues][]=6&tl[pixelValues][]=43&tl[pixelValues][]=42&tl[pixelValues][]=44&tl[pixelValues][]=11&tl[pixelValues][]=15&tl[pixelValues][]=57&tl[pixelValues][]=58&tl[pixelValues][]=36&tl[pixelValues][]=9&tl[pixelValues][]=23&tl[pixelValues][]=24&tl[pixelValues][]=25&tl[pixelValues][]=61&tl[pixelValues][]=26&tl[pixelValues][]=27&tl[year]=2021&tl[legendKey]=default&t[regionKey]=chaco&t[ids][]=2-4-1&t[divisionCategoryId]=1" target="_blank" rel="noreferrer" className={styles.cardLink}>↗ Open MapBiomas</a>
+            </div>
             <span className={styles.cardSub}>MapBiomas Gran Chaco · Collection 5 · 30 m · 1985–2023</span>
           </div>
           <div className={styles.cardBody}>
@@ -65,7 +71,10 @@ export default function AnalyzeView({ firmsRows, firmsLoading, firmsError, firms
         {/* ── Flood Monitoring ── */}
         <div className={styles.card}>
           <div className={styles.cardHead}>
-            <span className={styles.cardTitle}>Flood Monitoring</span>
+            <div className={styles.cardTitleRow}>
+              <span className={styles.cardTitle}>Flood Monitoring</span>
+              <a href="https://global-flood.emergency.copernicus.eu/react/map" target="_blank" rel="noreferrer" className={styles.cardLink}>↗ Open Copernicus Flood Map</a>
+            </div>
             <span className={styles.cardSub}>Open-Meteo · Copernicus GloFAS ensemble · Bermejo–Paraguay basin</span>
           </div>
           <div className={styles.cardBody}>
@@ -81,15 +90,18 @@ export default function AnalyzeView({ firmsRows, firmsLoading, firmsError, firms
         {/* ── INA Telemetric Stations ── */}
         <div className={styles.card}>
           <div className={styles.cardHead}>
-            <span className={styles.cardTitle}>INA Observed Gauges</span>
+            <div className={styles.cardTitleRow}>
+              <span className={styles.cardTitle}>INA Observed Gauges</span>
+              <a href="https://alerta.ina.gob.ar/pub/mapa" target="_blank" rel="noreferrer" className={styles.cardLink}>↗ Open INA Alert Map</a>
+            </div>
             <span className={styles.cardSub}>INA sSIyAH · Argentina National Water Institute · 3 stations</span>
           </div>
           <div className={styles.cardBody}>
             <p className={styles.desc}>
-              Three telemetric stations from INA's sSIyAH network provide observed data to cross-check the GloFAS models.
-              <strong> Puerto Lavalle</strong> measures actual river level on the lower Bermejo, 121 km downstream of the park — a real reading against the model signal.
-              <strong> Pozo Sarmiento</strong>, 350 km upstream near the Bolivian border, holds the only discharge gauge on the entire Bermejo — and it is currently offline.
-              That silence is the monitoring gap: without it, no agency can say how much water is entering Argentina's Chaco.
+              Six telemetric stations from INA's sSIyAH network provide observed data to cross-check the GloFAS models.
+              <strong> Puerto Lavalle</strong> measures actual river level on the lower Bermejo, 121 km downstream of the park.
+              <strong> El Colorado</strong> holds the only discharge data ever published for the Bermejo — 454 readings over 79 days (July–September 2024), then permanent silence.
+              That 79-day record is the only time anyone measured how much water this river actually carries.
             </p>
             <div className={styles.divider} />
 
@@ -99,7 +111,7 @@ export default function AnalyzeView({ firmsRows, firmsLoading, firmsError, firms
 
             {!inaLoading && (() => {
               const pl = inaStations?.find(s => s.id === 'ina-puerto-lavalle');
-              const ps = inaStations?.find(s => s.id === 'ina-pozo-sarmiento');
+              const ec = inaStations?.find(s => s.id === 'ina-el-colorado');
               const meteo = inaStations?.find(s => s.id === 'ina-impenetrable');
               const plOk  = pl?.status === 'ok';
               return (
@@ -134,10 +146,10 @@ export default function AnalyzeView({ firmsRows, firmsLoading, firmsError, firms
                     </div>
                   )}
                   <div className={styles.statusRow} style={{ marginTop: 6 }}>
-                    <StatusDot color="#dc2626" />
+                    <StatusDot color="#6b7280" />
                     <span className={styles.statusText}>
-                      Pozo Sarmiento · Offline — the only discharge gauge on the Bermejo
-                      {ps?.daysSinceUpdate != null ? ` · last data ${ps.daysSinceUpdate}d ago` : ''}
+                      El Colorado · Offline — 454 readings, 79-day window only (Jul–Sep 2024)
+                      {ec?.daysSinceUpdate != null ? ` · silent ${ec.daysSinceUpdate}d` : ''}
                     </span>
                   </div>
                 </>
@@ -149,7 +161,10 @@ export default function AnalyzeView({ firmsRows, firmsLoading, firmsError, firms
         {/* ── FIRMS Fire Alerts ── */}
         <div className={styles.card}>
           <div className={styles.cardHead}>
-            <span className={styles.cardTitle}>Active Fire Detections</span>
+            <div className={styles.cardTitleRow}>
+              <span className={styles.cardTitle}>Active Fire Detections</span>
+              <a href="https://firms.modaps.eosdis.nasa.gov/map/#d:24hrs;@-60.1,-25.2,6.4z" target="_blank" rel="noreferrer" className={styles.cardLink}>↗ Open FIRMS Map</a>
+            </div>
             <span className={styles.cardSub}>NASA FIRMS · VIIRS S-NPP + NOAA-20 + NOAA-21 · 375 m · last 5 days</span>
           </div>
           <div className={styles.cardBody}>

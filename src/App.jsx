@@ -8,9 +8,11 @@ import AnalyzeView from './components/AnalyzeView';
 import WelcomeModal from './components/WelcomeModal';
 import TourOverlay from './components/TourOverlay';
 import KeyboardHintOverlay from './components/KeyboardHintOverlay';
+import ActView from './components/ActView';
 import { useFirmsData } from './hooks/useFirmsData';
 import { useFloodData } from './hooks/useFloodData';
 import { useInaGaugeData } from './hooks/useInaGaugeData';
+import { useVerifiedSubmissions } from './hooks/useVerifiedSubmissions';
 import { useTour } from './hooks/useTour';
 
 const DEFAULT_LAYERS = {
@@ -22,10 +24,11 @@ const DEFAULT_LAYERS = {
   gsw_transitions: false,
   floodGauges: false,
   inaStations: false,
+  community: false,
 };
 
-const EXPLORE_LAYERS = { ...DEFAULT_LAYERS, park: true, buffer: true, pumps: true };
-const POST_TOUR_LAYERS = { ...DEFAULT_LAYERS, park: true, buffer: true, pumps: true, floodGauges: true, firms: true, inaStations: true };
+const EXPLORE_LAYERS    = { ...DEFAULT_LAYERS, park: true, buffer: true, pumps: true };
+const POST_TOUR_LAYERS  = { ...DEFAULT_LAYERS, park: true, buffer: true, pumps: true, floodGauges: true, firms: true, inaStations: true };
 
 function buildMonths() {
   const months = [];
@@ -56,9 +59,12 @@ export default function App() {
   const [mapbiomas, setMapbiomas] = useState({ enabled: false, year: 2023 });
   const mapRef = useRef(null);
 
+  const [actPin, setActPin] = useState(null);
+
   const { rows: firmsRows, geojson: firmsGeoJSON, loading: firmsLoading, error: firmsError, fetchedAt: firmsFetchedAt } = useFirmsData();
   const { gauges: floodGauges, geojson: floodGeoJSON } = useFloodData();
   const { stations: inaStations, geojson: inaGeoJSON, loading: inaLoading } = useInaGaugeData();
+  const { geojson: communityGeoJSON } = useVerifiedSubmissions(layers.community);
 
   const firmsStats = useMemo(() => {
     const rows = firmsRows ?? [];
@@ -68,6 +74,9 @@ export default function App() {
     const lastDetection = rows.length ? [...rows.map(r => r.acq_date).filter(Boolean)].sort().at(-1) : null;
     return { total: rows.length, high, nominal, low, lastDetection, fetchedAt: firmsFetchedAt?.toLocaleTimeString() };
   }, [firmsRows, firmsFetchedAt]);
+
+  // Pin is only active while on the Act tab — derive rather than sync
+  const effectiveActPin = activeTab === 'Act' ? actPin : null;
 
   const handleTourComplete = useCallback(() => {
     setTourPhase('exploring');
@@ -125,6 +134,10 @@ export default function App() {
         inaGeoJSON={inaGeoJSON}
         inaStations={inaStations}
         mapbiomas={mapbiomas}
+        communityGeoJSON={communityGeoJSON}
+        actMode={activeTab === 'Act'}
+        actPin={effectiveActPin}
+        onActPick={setActPin}
         onIntroComplete={handleIntroComplete}
       />
 
@@ -141,6 +154,10 @@ export default function App() {
 
       {activeTab === 'History'     && <HistoryView />}
       {activeTab === 'Legislation' && <LegislationView />}
+      {activeTab === 'Act' && (
+        <ActView actPin={effectiveActPin} onClearPin={() => setActPin(null)} />
+      )}
+
       {activeTab === 'Analyze'     && (
         <AnalyzeView
           firmsRows={firmsRows}

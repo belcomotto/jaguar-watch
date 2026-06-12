@@ -56,6 +56,29 @@ function adjacentMonths(months, currentIdx, radius = 4) {
   return result;
 }
 
+const TYPE_DISPLAY = {
+  river: 'River related / Relacionado al río',
+  deforestation: 'Deforestation / Desmonte',
+  fire: 'Fire / Incendio',
+  contamination: 'Contamination / Contaminación',
+  poaching: 'Poaching & illegal fishing / Caza y pesca ilegal',
+  testimony: 'Testimony / Testimonio',
+  other: 'Other / Otro',
+};
+const EVIDENCE_DISPLAY = {
+  photo_video: 'Photo or video / Foto o video',
+  satellite: 'Satellite image / Imagen satelital',
+  document: 'Official document or report / Documento o informe oficial',
+  direct_observation: 'Direct observation / Observación directa',
+  secondhand: 'Secondhand account / Relato de terceros',
+  other: 'Other / Otro',
+};
+const CONFIDENCE_DISPLAY = {
+  witnessed: 'I witnessed this directly / Lo presencié directamente',
+  confident: "I'm fairly confident / Estoy bastante seguro/a",
+  suspicion: "It's a suspicion / Es una sospecha",
+};
+
 const FIRMS_CONF_COLOR = ['match', ['get', 'confidence'],
   'h', '#ff2200', 'high', '#ff2200',
   'n', '#ff8800', 'nominal', '#ff8800',
@@ -65,6 +88,25 @@ const FIRMS_CONF_COLOR = ['match', ['get', 'confidence'],
 // ── Canvas-drawn map icons ────────────────────────────────────────────────────
 // Drawn at 2× so they stay crisp on retina. pixelRatio:2 tells Mapbox the
 // logical size is half the canvas size.
+
+function communityIcon() {
+  return makeIcon((ctx, S) => {
+    const cx = S / 2;
+    const r = S * 0.36;
+    ctx.beginPath();
+    ctx.arc(cx, cx, r + 2, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx, cx, r, 0, Math.PI * 2);
+    ctx.fillStyle = '#8b5cf6';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx, cx, r * 0.25, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.fill();
+  });
+}
 
 function makeIcon(drawFn, size = 24) {
   const px = size * 2;
@@ -196,11 +238,14 @@ const WATER_PATH_PUMPS = [
   { coords: [-61.424589, -24.619062], sourceId: 'waterpath-wichipintado', file: '/data/waterpath_wichipintado.geojson', featureIdx: 2 },
 ];
 
-export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON, floodGeoJSON, floodGauges, inaGeoJSON, inaStations, mapbiomas, onIntroComplete }) {
+export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON, floodGeoJSON, floodGauges, inaGeoJSON, inaStations, mapbiomas, communityGeoJSON, actMode, actPin, onActPick, onIntroComplete }) {
   const containerRef = useRef(null);
   const onIntroCompleteRef = useRef(onIntroComplete);
   const inaStationsRef = useRef([]);
   const floodGaugesRef = useRef([]);
+  const actModeRef = useRef(false);
+  const onActPickRef = useRef(onActPick);
+  const actMarkerRef = useRef(null);
   const [overlays, setOverlays] = useState({ borders: false, places: false });
 
   const handleOverlayChange = (key, val) => setOverlays(prev => ({ ...prev, [key]: val }));
@@ -312,9 +357,8 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
         id: 'mapbiomas-layer',
         type: 'raster',
         source: 'mapbiomas',
-        // fade-duration 0  → instant swap, no blank frame between years
-        // resampling nearest → crisp class boundaries (no bilinear blurring)
-        paint: { 'raster-opacity': 0, 'raster-fade-duration': 0, 'raster-resampling': 'nearest' },
+        paint: { 'raster-opacity': 0.85, 'raster-fade-duration': 0, 'raster-resampling': 'nearest' },
+        layout: { visibility: 'none' },
       });
 
       // ── Sentinel image source ─────────────────────────────────────────────
@@ -398,6 +442,7 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
       }
 
       map.on('click', 'pumps-icon', (e) => {
+        if (actModeRef.current) return;
         pumpJustClicked = true;
         const [lng, lat] = e.features[0].geometry.coordinates;
         const wp = WATER_PATH_PUMPS.find(p =>
@@ -425,8 +470,12 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
           .addTo(map);
       });
 
-      // Clicking anywhere else fades out the active water path
-      map.on('click', () => {
+      // Clicking anywhere else — drop pin in actMode, or fade out active water path
+      map.on('click', (e) => {
+        if (actModeRef.current) {
+          onActPickRef.current?.({ lat: e.lngLat.lat.toFixed(5), lng: e.lngLat.lng.toFixed(5) });
+          return;
+        }
         if (!pumpJustClicked && activeWaterPathId) {
           hideWaterPath(activeWaterPathId);
           activeWaterPathId = null;
@@ -486,6 +535,7 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
         },
       });
       map.on('click', 'flood-icon', (e) => {
+        if (actModeRef.current) return;
         const p = e.features[0].properties;
         // Look up live gauge data from ref — GeoJSON properties may lag behind React state
         const g = floodGaugesRef.current.find(x => x.id === p.id) ?? p;
@@ -587,6 +637,7 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
         },
       });
       map.on('click', 'firms-icon', (e) => {
+        if (actModeRef.current) return;
         const p = e.features[0].properties;
         const confLabel = { h: 'High', high: 'High', n: 'Nominal', nominal: 'Nominal', l: 'Low', low: 'Low' }[p.confidence] ?? p.confidence;
         new mapboxgl.Popup({ className: 'pump-popup', closeButton: false })
@@ -643,6 +694,7 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
       });
 
       map.on('click', 'ina-icon', (e) => {
+        if (actModeRef.current) return;
         const p = e.features[0].properties;
         // Use live station data from ref — GeoJSON properties may be stale if fetches
         // completed after the last setData() call
@@ -683,14 +735,18 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
         } else if (s.type === 'discharge_gauge_offline') {
           const lastDateStr = s.lastDate ? String(s.lastDate).slice(0, 10) : null;
           const daysAgoText = s.daysSinceUpdate != null ? `${s.daysSinceUpdate} days` : null;
+          const hasHistory = s.historicTotalRows != null;
           body = `<div style="border-top:1px solid rgba(255,255,255,0.12);padding-top:9px;margin-top:4px">
-            <p style="font-size:13px;color:#dc2626;margin-bottom:7px">● Offline — discharge monitoring silent</p>
-            <p style="font-size:13px;color:#aaa;line-height:1.55">The only discharge gauge on the entire Bermejo. Without it, no one can say how much water is leaving Bolivia and entering Argentina's Chaco.</p>
+            <p style="font-size:13px;color:#dc2626;margin-bottom:7px">● Offline — silent since September 2024</p>
+            <p style="font-size:13px;color:#aaa;line-height:1.55">The only discharge data ever published for the Bermejo in the INA record — ${hasHistory ? `<strong>${s.historicTotalRows} readings</strong> compressed into a <strong>${s.historicWindowDays}-day window</strong>, then permanent silence.` : 'a brief window of monitoring, then permanent silence.'}</p>
           </div>
           <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:8px;margin-top:9px">
+            ${hasHistory ? `
+            <p style="font-size:12px;color:#aaa;margin-bottom:3px">Data window: ${s.historicWindowStart} – ${s.historicWindowEnd}</p>
+            <p style="font-size:12px;color:#aaa;margin-bottom:5px">Range: ${s.historicDischargeMin}–${s.historicDischargeMax} m³/s · Mean: ${s.historicDischargeMean} m³/s</p>` : ''}
             ${lastDateStr
-              ? `<p style="font-size:13px;color:#ef4444;font-weight:bold;margin-bottom:4px">Last confirmed signal: ${lastDateStr}${daysAgoText ? ` (${daysAgoText} ago)` : ''}</p>`
-              : `<p style="font-size:12px;color:#888;margin-bottom:4px">Last signal: unknown</p>`
+              ? `<p style="font-size:13px;color:#ef4444;font-weight:bold;margin-bottom:4px">Last reading: ${lastDateStr}${daysAgoText ? ` (${daysAgoText} ago)` : ''}</p>`
+              : `<p style="font-size:12px;color:#888;margin-bottom:4px">Last reading: unknown</p>`
             }
             <p style="font-size:12px;color:#666;font-style:italic">INA sSIyAH · varId 4 (discharge m³/s)</p>
           </div>`;
@@ -708,6 +764,81 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
       });
       map.on('mouseenter', 'ina-icon', () => { map.getCanvas().style.cursor = 'pointer'; });
       map.on('mouseleave', 'ina-icon', () => { map.getCanvas().style.cursor = ''; });
+
+      // ── Community submissions ─────────────────────────────────────────────
+      map.addImage('community-pin', communityIcon(), { pixelRatio: 2 });
+      map.addSource('community', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] },
+      });
+      map.addLayer({
+        id: 'community-halo',
+        type: 'circle',
+        source: 'community',
+        paint: {
+          'circle-radius': 18,
+          'circle-color': '#8b5cf6',
+          'circle-opacity': 0.22,
+          'circle-stroke-width': 0,
+        },
+        layout: { visibility: 'none' },
+      });
+      map.addLayer({
+        id: 'community-icon',
+        type: 'symbol',
+        source: 'community',
+        layout: {
+          'icon-image': 'community-pin',
+          'icon-size': 0.72,
+          'icon-allow-overlap': true,
+          'icon-ignore-placement': true,
+          visibility: 'none',
+        },
+      });
+
+      map.on('click', 'community-icon', (e) => {
+        if (actModeRef.current) return;
+        const p = e.features[0].properties;
+        const notesRow = p.notes
+          ? `<div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:10px;margin-top:12px">
+               <p style="font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:#888;margin-bottom:5px">Notes</p>
+               <p style="font-size:14px;color:#DED8CF;line-height:1.55">${p.notes}</p>
+             </div>` : '';
+        new mapboxgl.Popup({ className: 'pump-popup', closeButton: false, maxWidth: '480px' })
+          .setLngLat(e.lngLat)
+          .setHTML(`<div style="font-family:'IM Fell Double Pica',serif;padding:14px 18px;min-width:450px;max-width:480px">
+            <p style="font-size:17px;color:#DED8CF;margin-bottom:3px"><strong>${p.title}</strong></p>
+            <p style="font-size:12px;color:#8b5cf6;letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px">Community Submission</p>
+            <div style="border-top:1px solid rgba(255,255,255,0.12);padding-top:12px">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 20px;margin-bottom:12px">
+                <div>
+                  <p style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#888;margin-bottom:3px">Type of event</p>
+                  <p style="font-size:14px;color:#DED8CF">${TYPE_DISPLAY[p.type_of_event] ?? p.type_of_event}</p>
+                </div>
+                <div>
+                  <p style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#888;margin-bottom:3px">Date</p>
+                  <p style="font-size:14px;color:#DED8CF">${p.date_of_event ?? '—'}</p>
+                </div>
+                <div>
+                  <p style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#888;margin-bottom:3px">Evidence</p>
+                  <p style="font-size:14px;color:#DED8CF">${EVIDENCE_DISPLAY[p.evidence_type] ?? p.evidence_type}</p>
+                </div>
+                <div>
+                  <p style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#888;margin-bottom:3px">Confidence</p>
+                  <p style="font-size:14px;color:#DED8CF">${CONFIDENCE_DISPLAY[p.confidence] ?? p.confidence}</p>
+                </div>
+              </div>
+              <p style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#888;margin-bottom:5px">Description</p>
+              <p style="font-size:14px;color:#DED8CF;line-height:1.6;margin-bottom:10px">${p.description}</p>
+              <p style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#888;margin-bottom:5px">Evidence detail</p>
+              <p style="font-size:14px;color:#DED8CF;line-height:1.55">${p.evidence_detail}</p>
+            </div>
+            ${notesRow}
+          </div>`)
+          .addTo(map);
+      });
+      map.on('mouseenter', 'community-icon', () => { if (!actModeRef.current) map.getCanvas().style.cursor = 'pointer'; });
+      map.on('mouseleave', 'community-icon', () => { if (!actModeRef.current) map.getCanvas().style.cursor = ''; });
 
       // ── Globe intro dive ──────────────────────────────────────────────────
       // ── Tour pump highlight source + layers (start empty) ────────────────
@@ -856,8 +987,10 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
       toggle('flood-icon', layers.floodGauges);
       toggle('firms-halo', layers.firms);
       toggle('firms-icon', layers.firms);
-      toggle('ina-halo',   layers.inaStations);
-      toggle('ina-icon',   layers.inaStations);
+      toggle('ina-halo',        layers.inaStations);
+      toggle('ina-icon',        layers.inaStations);
+      toggle('community-halo',  layers.community);
+      toggle('community-icon',  layers.community);
     };
 
     if (map.isStyleLoaded()) {
@@ -926,21 +1059,24 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
   // Sync MapBiomas layer — instant swap (fade-duration 0) + preload neighbours
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !map.isStyleLoaded()) return;
+    if (!map) return;
+
     const src = map.getSource('mapbiomas');
     if (!src) return;
 
     if (!mapbiomas?.enabled) {
-      map.setPaintProperty('mapbiomas-layer', 'raster-opacity', 0);
+      if (map.getLayer('mapbiomas-layer'))
+        map.setLayoutProperty('mapbiomas-layer', 'visibility', 'none');
       return;
     }
 
     const year = mapbiomas.year;
     const url = `/data/mapbiomas/mapbiomas_${year}.png`;
     src.updateImage({ url, coordinates: MAPBIOMAS_COORDS });
-    map.setPaintProperty('mapbiomas-layer', 'raster-opacity', 0.85);
+    if (map.getLayer('mapbiomas-layer'))
+      map.setLayoutProperty('mapbiomas-layer', 'visibility', 'visible');
 
-    // Preload the next 3 and previous 1 years so browser cache is warm
+    // Preload adjacent years so the browser cache is warm for slider navigation
     for (const y of [year + 1, year + 2, year + 3, year - 1]) {
       if (y >= 1985 && y <= 2023) {
         const img = new window.Image();
@@ -968,6 +1104,50 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
   useEffect(() => {
     floodGaugesRef.current = floodGauges ?? [];
   }, [floodGauges]);
+
+  // Keep actMode and onActPick refs in sync
+  useEffect(() => { actModeRef.current = actMode ?? false; }, [actMode]);
+  useEffect(() => { onActPickRef.current = onActPick; }, [onActPick]);
+
+  // Crosshair cursor when actMode is on
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const canvas = map.getCanvas();
+    canvas.style.cursor = actMode ? 'crosshair' : '';
+  }, [actMode, mapRef]);
+
+  // Sync actPin to a drop-pin marker on the map
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (actMarkerRef.current) {
+      actMarkerRef.current.remove();
+      actMarkerRef.current = null;
+    }
+    if (!actPin) return;
+    const el = document.createElement('div');
+    el.style.cssText = `
+      width:18px;height:18px;border-radius:50%;
+      background:#22c55e;border:2.5px solid #fff;
+      box-shadow:0 0 0 3px rgba(34,197,94,0.4);
+      pointer-events:none;
+    `;
+    actMarkerRef.current = new mapboxgl.Marker({ element: el, anchor: 'center' })
+      .setLngLat([parseFloat(actPin.lng), parseFloat(actPin.lat)])
+      .addTo(map);
+  }, [actPin, mapRef]);
+
+  // Push community GeoJSON into the map source
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !communityGeoJSON) return;
+    const apply = () => {
+      const src = map.getSource('community');
+      if (src) src.setData(communityGeoJSON);
+    };
+    if (map.isStyleLoaded()) apply(); else map.once('load', apply);
+  }, [communityGeoJSON, mapRef]);
 
   // Sync borders / place-label overlay visibility
   useEffect(() => {

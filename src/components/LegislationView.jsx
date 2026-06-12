@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import styles from './ContentView.module.css';
 
 const STATUS_COLORS = {
@@ -24,6 +24,11 @@ const LAWS = [
       'The buffer zone around El Impenetrable is classified under Chaco\'s OTBN as prohibiting bulldozer clearing but permitting selective extraction (silvopastoral management). Field observations confirm that large-scale selective logging occurs continuously around the park perimeter, often by operators without title to the land — a double violation of the forest law and of property law.',
       'The national conservation fund mandated by the law has been chronically underfunded, receiving a fraction of the 0.3% of the national budget originally stipulated.',
     ],
+    images: [
+      { src: '/images/legislation/native-forest-deforestation-povedano-2016.jpg', caption: 'Deforestation in Chaco and Formosa, 2016. Photo: Hernán Povedano.' },
+      { src: '/images/legislation/native-forest-satellite-deforestation-1.png',   caption: 'Satellite image analysis of illegal selective deforestation in the El Impenetrable buffer zone.' },
+      { src: '/images/legislation/native-forest-satellite-deforestation-2.png',   caption: 'Satellite image analysis of illegal selective deforestation in the El Impenetrable buffer zone.' },
+    ],
     links: [
       { label: 'Ley 26.331 — InfoLEG', url: 'https://servicios.infoleg.gob.ar/infolegInternet/anexos/135000-139999/136125/norma.htm' },
       { label: 'Argentina.gob.ar', url: 'https://www.argentina.gob.ar/normativa/nacional/ley-26331-136125' },
@@ -44,6 +49,9 @@ const LAWS = [
       'The current APN administration (under Álvarez, appointed by Milei) is pursuing a privatization-oriented strategy focused on tourism revenue generation, which creates tension with the conservation and community-integration mission of the park.',
       'Park rangers have the legal authority to enforce (fiscalizar), but their capacity is limited compared to parks like Iguazú. There is no Prefectura Naval or Gendarmería presence on the Bermejo within the park boundaries due to the absence of formal ports.',
     ],
+    images: [
+      { src: '/images/history/aug-2017-1.jpg', caption: 'August 25, 2017 — official inauguration of Parque Nacional El Impenetrable.' },
+    ],
     links: [
       { label: 'Ley 26.996 — InfoLEG', url: 'https://servicios.infoleg.gob.ar/infolegInternet/anexos/235000-239999/238864/norma.htm' },
       { label: 'Argentina.gob.ar', url: 'https://www.argentina.gob.ar/normativa/nacional/ley-26996' },
@@ -63,6 +71,11 @@ const LAWS = [
       'Tier 3 — Private extraction: Small pumps and hoses scattered along the riverbanks serving private ranchos for domestic consumption and livestock production. No permits, no registration, no monitoring.',
       'Upstream contamination (Salta): The Ingenio San Martín del Tabacal (owned by Seaboard Corporation, brand "Chango") discharges industrial waste through a canal with a strong putrid smell and whitish color directly into the Río Colorado, just upstream of its confluence with the Bermejo. The ingenio also maintains black wastewater pools (piletones) meters from the Bermejo floodplain, which overflow into the river during high water. The Asociación de Pescadores del Río Bermejo has formally denounced the diversion of three tributary rivers (Río Blanco, Río Pescado, Río Santa María) by the sugar operation. The Salta provincial environment secretariat took samples after a mass fish die-off and cyanobacteria event in 2022. Results were never published.',
     ],
+    images: [
+      { src: '/images/legislation/env-water-rio-colorado.png',           caption: 'Rio Colorado outlet into the Bermejo' },
+      { src: '/images/legislation/env-water-satellite-rio-colorado.png', caption: 'Satellite view of Rio Colorado outlet into the Bermejo' },
+      { src: '/images/legislation/env-water-wasteland-bermejo.png',      caption: 'Wasteland in the shores of the Bermejo' },
+    ],
     links: [
       { label: 'Ley 25.688 — InfoLEG', url: 'https://servicios.infoleg.gob.ar/infolegInternet/anexos/80000-84999/81032/norma.htm' },
       { label: 'Argentina.gob.ar', url: 'https://www.argentina.gob.ar/normativa/nacional/ley-25688-81032/texto' },
@@ -80,6 +93,10 @@ const LAWS = [
       'The sugar industry operations upstream on the Bermejo involve infrastructure installation, tributary diversion, and industrial waste discharge — all activities requiring environmental impact assessment under this law. No public assessment has been made available.',
       'The pump installations documented in this investigation involve permanent or semi-permanent infrastructure on river banks affecting a nationally significant watercourse. No environmental review has been conducted.',
       'The 2022 cyanobacteria crisis — confirmed by multiple communities along 300km of river, causing gastrointestinal illness and a mass fish die-off — triggered sample collection by the Salta provincial environment secretariat. No results were ever published, violating the law\'s principle of public access to environmental information (Article 16).',
+    ],
+    images: [
+      { src: '/images/legislation/general-env-water-pump.png',       caption: 'Model of medium size water pump along the Bermejo' },
+      { src: '/images/legislation/general-env-bermejo-green-2022.jpg', caption: 'Satellite image of the Bermejo turned green in November 2022' },
     ],
     links: [
       { label: 'Ley 25.675 — InfoLEG', url: 'https://servicios.infoleg.gob.ar/infolegInternet/anexos/75000-79999/79980/norma.htm' },
@@ -161,6 +178,9 @@ const LAWS = [
       'If the effluent meets the definition of hazardous waste under the law\'s annexes (which include substances with ecotoxic or pathogenic characteristics), the discharge constitutes a violation carrying criminal penalties.',
       'Provincial environmental samples were collected after the 2022 cyanobacteria event. Results remain unpublished.',
     ],
+    images: [
+      { src: '/images/legislation/hazardous-dead-boga.png', caption: 'Dead Boga — fish kill on the Bermejo' },
+    ],
     links: [
       { label: 'Ley 24.051 — InfoLEG', url: 'https://servicios.infoleg.gob.ar/infolegInternet/anexos/0-4999/450/texact.htm' },
     ],
@@ -178,7 +198,7 @@ const SUMMARY = [
   { num: 8, code: 'Ley 24.051', name: 'Residuos Peligrosos',  year: 1992, status: 'IN FORCE — POTENTIALLY VIOLATED',  color: STATUS_COLORS.orange },
 ];
 
-function LawCard({ law, id }) {
+function LawCard({ law, id, onImageClick }) {
   const [open, setOpen] = useState(false);
   return (
     <article id={id} className={styles.lawCard}>
@@ -192,6 +212,21 @@ function LawCard({ law, id }) {
         <span className={styles.lawStatusText}>{law.status}</span>
       </div>
       <p className={styles.lawBody}>{law.body}</p>
+
+      {law.images?.length > 0 && (
+        <div className={styles.imgStrip} style={{ marginTop: 14, marginBottom: 4 }}>
+          {law.images.map((img, j) => (
+            <img
+              key={j}
+              src={img.src}
+              alt={img.caption}
+              className={styles.imgStripItem}
+              loading="lazy"
+              onClick={() => onImageClick(img)}
+            />
+          ))}
+        </div>
+      )}
 
       <button
         onClick={() => setOpen(o => !o)}
@@ -238,6 +273,17 @@ function LawCard({ law, id }) {
 
 export default function LegislationView() {
   const scrollRef = useRef(null);
+  const [lightbox, setLightbox] = useState(null);
+  const [zoomed, setZoomed] = useState(false);
+
+  useEffect(() => { setZoomed(false); }, [lightbox]);
+
+  useEffect(() => {
+    if (!lightbox) return;
+    const onKey = (e) => { if (e.key === 'Escape') setLightbox(null); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [lightbox]);
 
   function scrollToLaw(num) {
     const el = document.getElementById(`law-${num}`);
@@ -246,6 +292,7 @@ export default function LegislationView() {
   }
 
   return (
+    <>
     <div className={styles.view}>
       <div className={styles.scroll} ref={scrollRef}>
         <header className={styles.viewHeader}>
@@ -297,7 +344,7 @@ export default function LegislationView() {
         </div>
 
         <div className={styles.lawGrid}>
-          {LAWS.map((law, i) => <LawCard key={i} law={law} id={`law-${i + 1}`} />)}
+          {LAWS.map((law, i) => <LawCard key={i} law={law} id={`law-${i + 1}`} onImageClick={setLightbox} />)}
         </div>
 
         {/* Legal standing */}
@@ -322,5 +369,32 @@ export default function LegislationView() {
         </footer>
       </div>
     </div>
+
+    {lightbox && (
+      <div className={styles.lightbox} onClick={() => setLightbox(null)}>
+        <button className={styles.lightboxClose} onClick={() => setLightbox(null)}>✕</button>
+        <div
+          className={styles.lightboxInner}
+          style={zoomed ? { overflow: 'auto', maxWidth: '90vw', maxHeight: '90vh' } : undefined}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {lightbox.caption && !zoomed && (
+            <p className={styles.lightboxCaption}>{lightbox.caption}</p>
+          )}
+          <img
+            src={lightbox.src}
+            alt="Expanded view"
+            className={styles.lightboxImg}
+            style={{
+              maxWidth:  zoomed ? 'none' : undefined,
+              maxHeight: zoomed ? 'none' : undefined,
+              cursor: zoomed ? 'zoom-out' : 'zoom-in',
+            }}
+            onClick={() => setZoomed(z => !z)}
+          />
+        </div>
+      </div>
+    )}
+    </>
   );
 }

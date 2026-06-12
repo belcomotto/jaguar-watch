@@ -24,6 +24,25 @@
   color: var(--green);
 }
 
+.cardTitleRow {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.cardLink {
+  font-size: 10px;
+  color: #7ab84e;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.cardLink:hover {
+  color: var(--green);
+}
+
 .cardSub {
   font-size: 10px;
   color: var(--sand-dim);

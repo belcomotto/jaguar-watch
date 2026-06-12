@@ -11,6 +11,7 @@
     "sentinel:download": "node scripts/download_sentinel.mjs"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.108.1",
     "geotiff": "^3.0.5",
     "mapbox-gl": "^3.23.1",
     "react": "^19.2.6",

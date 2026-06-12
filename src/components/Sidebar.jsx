@@ -55,7 +55,7 @@ const LAYER_INFO = {
     ],
   },
   inaStations: {
-    description: '6 telemetric (in territory) stations from Argentina\'s National Water Institute (INA sSIyAH network). Aguas Blancas, Embarcación, and Puerto Velaz gauge river level across the upper and lower Bermejo reaches. Puerto Lavalle provides a real observed reading to cross-check the GloFAS model. The park meteorological station monitors conditions inside El Impenetrable. Pozo Sarmiento, near the Bolivian border, is the only discharge gauge on the entire Bermejo — currently offline. That silence is the monitoring gap.',
+    description: '6 telemetric (in territory) stations from Argentina\'s National Water Institute (INA sSIyAH network). Aguas Blancas, Embarcación, and Puerto Velaz gauge river level across the upper and lower Bermejo reaches. Puerto Lavalle provides a real observed reading to cross-check the GloFAS model. The park meteorological station monitors conditions inside El Impenetrable. El Colorado holds the only discharge data ever published for the Bermejo — 454 readings over 79 days (July – September 2024), then silence. It is the only evidence of how much water the river actually carries.',
     legend: [
       { color: '#4db8ff', label: 'River level gauge — active' },
       { color: '#f0a500', label: 'Meteorological station' },
@@ -68,6 +68,12 @@ const LAYER_INFO = {
       { color: '#ff2200', label: 'High confidence' },
       { color: '#ff8800', label: 'Nominal confidence' },
       { color: '#ffcc00', label: 'Low confidence' },
+    ],
+  },
+  community: {
+    description: 'Community sourced events registered through the ACT panel and verified by the Jaguar Watch team. Each marker represents a submitted observation — fire, contamination, illegal extraction, or testimony — reviewed before appearing on the map.',
+    legend: [
+      { color: '#8b5cf6', label: 'Verified community submission', round: true },
     ],
   },
 };
@@ -210,6 +216,15 @@ export default function Sidebar({ layers, setLayers, mapbiomas, setMapbiomas }) 
             <span className={styles.groupSub}>NASA FIRMS · VIIRS S-NPP · 5 days</span>
           </div>
           <GswLayerRow layer={{ id: 'firms', label: 'Active Fire Alerts', color: '#ff4400' }} active={layers.firms} onToggle={toggleLayer} />
+        </div>
+
+        {/* 8 — Community */}
+        <div className={styles.layerGroup}>
+          <div className={styles.groupHeader}>
+            <span className={styles.groupLabel}>Community / Comunidad</span>
+            <span className={styles.groupSub}>community sourced events registered through the ACT panel</span>
+          </div>
+          <GswLayerRow layer={{ id: 'community', label: 'Community / Comunidad', color: '#8b5cf6' }} active={layers.community} onToggle={toggleLayer} />
         </div>
 
         <div className={styles.legend}>

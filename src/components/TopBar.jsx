@@ -5,6 +5,7 @@ const NAV = [
   { id: 'History',     label: 'History' },
   { id: 'Legislation', label: 'Legislation' },
   { id: 'Analyze',     label: 'Analyze' },
+  { id: 'Act',         label: 'Act' },
 ];
 
 export default function TopBar({ activeTab, setActiveTab }) {

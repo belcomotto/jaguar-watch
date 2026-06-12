@@ -29,7 +29,8 @@ function buildTourInaPopupHtml(s) {
     else if (s.type === 'meteo' && s.temp != null)
       detail = `<p style="font-size:12px;color:#aaa;margin:3px 0 0">${s.temp}°C${s.humidity != null ? ' · ' + s.humidity + '% hum' : ''}</p>`;
     else if (s.type === 'discharge_gauge_offline')
-      detail = `<p style="font-size:12px;color:#dc2626;margin:3px 0 0">Offline${s.daysSinceUpdate != null ? ' · ' + s.daysSinceUpdate + ' days since last data' : ''}</p>`;
+      detail = `<p style="font-size:12px;color:#dc2626;margin:3px 0 0">Offline · last reading Sep 2024</p>
+        ${s.historicTotalRows != null ? `<p style="font-size:11px;color:#888;margin:2px 0 0">${s.historicTotalRows} readings · ${s.historicWindowDays}-day window only</p>` : ''}`;
   }
   return `<div style="font-family:'IM Fell Double Pica',serif;padding:8px 12px;min-width:190px">
     <p style="font-size:14px;color:#DED8CF;margin:0 0 2px"><strong>${s.name}</strong></p>
@@ -379,7 +380,7 @@ async function phaseMapbiomas({ go, pause, map, setOverlay }) {
   vis(map, ['park-fill','park-line','park-label'], true);
 
   if (map.getLayer('mapbiomas-layer'))
-    map.setPaintProperty('mapbiomas-layer', 'raster-opacity', 0);
+    map.setLayoutProperty('mapbiomas-layer', 'visibility', 'none');
 
   await go({
     center: [-62.5, -26.0],
@@ -391,7 +392,7 @@ async function phaseMapbiomas({ go, pause, map, setOverlay }) {
   const src = map.getSource('mapbiomas');
   if (src) {
     src.updateImage({ url: '/data/mapbiomas/mapbiomas_1985.png', coordinates: MB_COORDS });
-    map.setPaintProperty('mapbiomas-layer', 'raster-opacity', 0.85);
+    map.setLayoutProperty('mapbiomas-layer', 'visibility', 'visible');
   }
   setOverlay({
     id: 'mapbiomas',
@@ -417,14 +418,14 @@ async function phaseMapbiomas({ go, pause, map, setOverlay }) {
   await pause(2000);
 
   if (map.getLayer('mapbiomas-layer'))
-    map.setPaintProperty('mapbiomas-layer', 'raster-opacity', 0);
+    map.setLayoutProperty('mapbiomas-layer', 'visibility', 'none');
 }
 
 // ── River phases (3 individual phases) ───────────────────────────────────────
 
 async function phaseRiverIntro({ go, ease, map, setOverlay }) {
   if (map.getLayer('mapbiomas-layer'))
-    map.setPaintProperty('mapbiomas-layer', 'raster-opacity', 0);
+    map.setLayoutProperty('mapbiomas-layer', 'visibility', 'none');
   gswReset(map, 'gsw_seasonality-layer');
   gswReset(map, 'gsw_transitions-layer');
   vis(map, ['park-fill','park-line','park-label',
@@ -453,7 +454,7 @@ async function phaseRiverIntro({ go, ease, map, setOverlay }) {
 async function phaseRiverSeasonality({ go, ease, pause, map, setOverlay }) {
   gswReset(map, 'gsw_transitions-layer');
   if (map.getLayer('mapbiomas-layer'))
-    map.setPaintProperty('mapbiomas-layer', 'raster-opacity', 0);
+    map.setLayoutProperty('mapbiomas-layer', 'visibility', 'none');
 
   // Quick entry shot so Back navigation lands at a sensible position
   await go({
@@ -669,7 +670,7 @@ async function phaseInaGauges({ go, pause, map, setOverlay, inaStationsRef, addT
     id: 'ina-gauges',
     title: 'The Monitoring Gap',
     subtitle: 'INA sSIyAH · Telemetric (In Territory)',
-    body: 'Six telemetric (in territory) stations cover the Bermejo corridor. Three gauge river level across the upper reaches — Aguas Blancas at the Bolivian border, Embarcación, and Puerto Velaz. Puerto Lavalle, 121 km downstream of the park, provides the ground-truth reading that cross-checks the satellite models. Inside the park, a meteorological station watches conditions. And Pozo Sarmiento holds the only discharge gauge on the whole Bermejo — last confirmed signal: June 2025, silent ever since. That silence is the monitoring gap.',
+    body: 'Six telemetric (in territory) stations cover the Bermejo corridor. Three gauge river level across the upper reaches — Aguas Blancas at the Bolivian border, Embarcación, and Puerto Velaz. Puerto Lavalle, 121 km downstream of the park, provides the ground-truth reading that cross-checks the satellite models. Inside the park, a meteorological station watches conditions. El Colorado holds the only discharge data ever published for the entire Bermejo — 454 readings over 79 days (July – September 2024), then permanent silence. That 79-day record is the only time anyone measured how much water this river actually carries.',
   });
 
   // Fade in an individual popup at each station
@@ -757,7 +758,7 @@ export function useTour(mapRef, { onComplete, firmsStats, floodGauges, inaStatio
     setCanGoForward(startPhase < PHASES.length - 1);
 
     if (map.getLayer('mapbiomas-layer'))
-      map.setPaintProperty('mapbiomas-layer', 'raster-opacity', 0);
+      map.setLayoutProperty('mapbiomas-layer', 'visibility', 'none');
 
     const go = (opts) => new Promise((resolve, reject) => {
       if (cancelled.current) { reject(new Error('cancelled')); return; }

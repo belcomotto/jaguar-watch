@@ -7,7 +7,7 @@ const SECTIONS = [
     title: 'The People of the Bermejo',
     body: `Long before the Chaco had a name on any map, the Wichí, Qom (Toba), and Moqoit peoples shaped their lives around its rhythms. The Bermejo River was not a boundary — it was the pulse of everything: food, mobility, ceremony, memory. The dry Chaco they inhabited was one of South America's largest continuous forests, a landscape of extremes that demanded deep knowledge to survive and offered extraordinary richness in return. That knowledge is still here. It never left.`,
     images: [
-      { src: '/images/history/pre-colonial-1.jpeg', caption: '' },
+      { src: '/images/history/pre-colonial-1.jpeg', caption: 'El Impenetrable — historical photograph. Photo: Sebastián DM. Fundación Rewilding Argentina.' },
       { src: '/images/history/pre-colonial-2.jpg',  caption: '"Rio Vermejo — Indians Fishing." Wood engraving depicting Toba people fishing with bows while the US Navy steamship Water Witch is moored in the background during the 1854 expedition. Published in: Page, Thomas Jefferson. La Plata, the Argentine Confederation, and Paraguay. New York: Harper & Brothers, 1859, p. 249.' },
     ],
   },
@@ -39,8 +39,8 @@ const SECTIONS = [
     title: 'The Murder That Changed Everything',
     body: `On January 13, 2011, in the town of Juan José Castelli, Manuel Roseo — 75 years old — and his sister-in-law Nelly Bartolomé — 73 years old, widow of his brother — were tortured and murdered by a criminal organization seeking to seize the estate, valued at 250 million dollars. The group was linked to a network of notaries, lawyers, and businesspeople who had fraudulently sold parcels of the estate to multinational grain companies without the owner's knowledge or consent.\n\nRoseo had no recognized children. He had refused all offers to sell. Douglas Tompkins himself had met with him. After the murders, the land entered a complex inheritance dispute — and simultaneously, something shifted in the conservation world. The crime had made the land visible. Environmental organizations, writers, and activists mobilized immediately. What had been a decades-long conservationist dream suddenly had political momentum.`,
     images: [
-      { src: '/images/history/jan-2011-1.png', caption: '' },
-      { src: '/images/history/jan-2011-2.jpg', caption: '' },
+      { src: '/images/history/jan-2011-1.png', caption: 'Estancia La Fidelidad — the estate that would become El Impenetrable National Park.' },
+      { src: '/images/history/jan-2011-2.jpg', caption: 'El Impenetrable — today a national park, opened to its first visitors in 2017. Photo: Florian von der Fecht, August 2023.' },
     ],
   },
   {
@@ -48,8 +48,8 @@ const SECTIONS = [
     title: 'The Long Push to Create a Park',
     body: `On August 5, 2011, then-governor Jorge Capitanich announced the expropriation process to transform La Fidelidad into a national park. It wasn't straightforward. The inheritance dispute dragged through the courts. Heirs appeared. Injunctions were filed. The process that should have taken months took years.\n\nThrough it all, a coalition held it together: environmental NGOs, the organizations Banco de Bosques and CEIBA, Fundación Flora y Fauna Argentina, and — crucially — the financial support of Douglas Tompkins' Conservation Land Trust, which committed the funds needed to close the gap between what had been raised and what the expropriation law required. The law creating the national park was passed unanimously in both chambers of the Argentine Congress on October 22, 2014. Rewilding Argentina had been on the ground since December 2012, running wildlife surveys, building relationships with communities, and quietly holding the place while the bureaucracies caught up.`,
     images: [
-      { src: '/images/history/2011-2014-1.jpg', caption: '' },
-      { src: '/images/history/2011-2014-2.png', caption: '' },
+      { src: '/images/history/2011-2014-1.jpg', caption: 'Parque Nacional El Impenetrable — created by Ley 26.996, passed unanimously October 22, 2014.' },
+      { src: '/images/history/2011-2014-2.png', caption: 'La Fidelidad division — the Chaco side became the national park; the Formosa side remains in the hands of heirs.' },
     ],
   },
   {
@@ -57,7 +57,7 @@ const SECTIONS = [
     title: 'The Park Opens',
     body: `The park was officially inaugurated on August 25, 2017, three years after the law, delayed by the same judicial battles that had slowed everything else. National Parks could only formally enter to begin protection in April 2017. The 130,000 hectares on the Chaco side were now protected. But the Formosa side — another 100,000 hectares, the other half of La Fidelidad — remained in the hands of the heirs, still tangled in succession proceedings. Rewilding Argentina wants to purchase it. As of today, that process continues.\n\nWhat the locals call it matters here. They don't say "El Impenetrable." They say *La Fidelidad*. That name holds the memory of everything that came before — the Roseos, the hunters who slipped through the fence, the sense of a place that existed outside the official story. Conservation renamed it. The people remember both.`,
     images: [
-      { src: '/images/history/aug-2017-1.jpg', caption: '' },
+      { src: '/images/history/aug-2017-1.jpg', caption: 'August 25, 2017 — official inauguration of Parque Nacional El Impenetrable.' },
     ],
   },
   {
@@ -65,10 +65,10 @@ const SECTIONS = [
     title: 'Rewilding and the Question of Community',
     body: `The arrival of uniformed park rangers in 2017 was jarring for many local residents. Institutions don't always translate well into places that have long operated without them. Rewilding Argentina took a different approach: building relationships first, bringing economic alternatives second. Tourism — nature tourism, wildlife watching — became the framework. Before Rewilding arrived, there was no tourism in the area. Communities had never seen a tourist. The concept required explanation.\n\nSlowly, it took shape: local women became cooks and guides, artisans began working with natural pigments and dead wood, weaving patterns that echoed the jaguar's markings. The monte — which communities already knew and identified with — became the basis for a regenerative economy. The Bermejo River was harder. Many people living 30 kilometers from the river had never seen it. Community workers in the area describe this as one of the deeper challenges: *El Impenetrable se asocia a la falta de agua* — the Impenetrable is associated with the absence of water, not its presence. Building a relationship between people and a river they've never touched is slow, patient work.`,
     images: [
-      { src: '/images/history/2017-present-1.jpg', caption: '' },
-      { src: '/images/history/2017-present-2.jpg', caption: '' },
-      { src: '/images/history/2017-present-3.jpg', caption: '' },
-      { src: '/images/history/2017-present-4.jpg', caption: '' },
+      { src: '/images/history/2017-present-1.jpg', caption: 'El Impenetrable. Photo: Estrella Herrera. Fundación Rewilding Argentina.' },
+      { src: '/images/history/2017-present-2.jpg', caption: 'El Impenetrable. Photo: Estrella Herrera. Fundación Rewilding Argentina.' },
+      { src: '/images/history/2017-present-3.jpg', caption: 'El Impenetrable — nature tourism, August 2023. Photo: Florian von der Fecht. Fundación Rewilding Argentina.' },
+      { src: '/images/history/2017-present-4.jpg', caption: 'El Impenetrable — nature tourism, August 2023. Photo: Florian von der Fecht. Fundación Rewilding Argentina.' },
     ],
   },
   {
@@ -76,8 +76,8 @@ const SECTIONS = [
     title: 'The Jaguar Returns',
     body: `In September 2019, jaguar footprints were recorded in the national park for the first time. Camera traps confirmed it: a solitary male, later named Qaramta, roaming the dry forest. He was one of fewer than ten confirmed jaguars remaining across the million square kilometers of Argentine Gran Chaco — and all of them were male. Without females, the species faced a genetic dead end in the Chaco.\n\nIn March 2024, Keraná — a female jaguar rescued in Paraguay as a cub after her mother was killed by hunters — became the first female jaguar released into El Impenetrable. Others followed: Nalá, born at the park's breeding center; Acaí, translocated from Iberá; and in March 2025, Miní — the first wild-born jaguar ever translocated between wild populations anywhere in the world.\n\nThe jaguar's return is not just ecological. It is, as Jaguar Rivers puts it, proof that if the jaguar returns, everything else can follow. The rivers, the forests, the people, the future.`,
     images: [
-      { src: '/images/history/2018-present-1.jpg', caption: '' },
-      { src: '/images/history/2018-present-2.jpg', caption: '' },
+      { src: '/images/history/2018-present-1.jpg', caption: 'Jaguar footprint — drone survey, Yungas landscapes. Photo: Lucinda Di Martino. Fundación Rewilding Argentina.' },
+      { src: '/images/history/2018-present-2.jpg', caption: 'Nalá and her cub, July 2025. Photo: Pablo Luna. Fundación Rewilding Argentina.' },
     ],
   },
   {
