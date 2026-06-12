@@ -830,8 +830,11 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
               </div>
               <p style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#888;margin-bottom:5px">Description</p>
               <p style="font-size:14px;color:#DED8CF;line-height:1.6;margin-bottom:10px">${p.description}</p>
-              <p style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#888;margin-bottom:5px">Evidence detail</p>
-              <p style="font-size:14px;color:#DED8CF;line-height:1.55">${p.evidence_detail}</p>
+              <p style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#888;margin-bottom:5px">Evidence</p>
+              ${p.evidence_detail && (p.evidence_detail.startsWith('http://') || p.evidence_detail.startsWith('https://'))
+                ? `<a href="${p.evidence_detail}" target="_blank" rel="noreferrer" style="font-size:14px;color:#72b84e;line-height:1.55;word-break:break-all;text-decoration:none">↗ ${p.evidence_detail}</a>`
+                : `<p style="font-size:14px;color:#DED8CF;line-height:1.55">${p.evidence_detail}</p>`
+              }
             </div>
             ${notesRow}
           </div>`)
@@ -1144,6 +1147,7 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
     if (!map || !communityGeoJSON) return;
     const apply = () => {
       const src = map.getSource('community');
+      console.log('[community] setData features:', communityGeoJSON.features.length, communityGeoJSON.features[0]?.geometry?.coordinates);
       if (src) src.setData(communityGeoJSON);
     };
     if (map.isStyleLoaded()) apply(); else map.once('load', apply);

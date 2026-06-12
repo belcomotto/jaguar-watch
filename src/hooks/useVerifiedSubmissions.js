@@ -40,7 +40,7 @@ export function useVerifiedSubmissions(enabled) {
     type: 'FeatureCollection',
     features: submissions.map(s => ({
       type: 'Feature',
-      geometry: { type: 'Point', coordinates: [s.longitude, s.latitude] },
+      geometry: { type: 'Point', coordinates: [Number(s.longitude), Number(s.latitude)] },
       properties: { ...s },
     })),
   }), [submissions]);
