@@ -15,7 +15,7 @@ const ITEMS = [
   },
   {
     key: 'places',
-    label: 'Places',
+    label: 'Settlements',
     icon: (
       <svg viewBox="0 0 14 18" width="10" height="13" fill="none">
         <circle cx="7" cy="6.5" r="4.5" stroke="currentColor" strokeWidth="1.5"/>

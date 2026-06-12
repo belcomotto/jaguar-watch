@@ -219,7 +219,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: zoom-out;
+  cursor: default;
 }
 
 .lightboxInner {

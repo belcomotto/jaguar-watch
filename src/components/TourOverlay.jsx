@@ -25,7 +25,7 @@ function Slideshow({ images }) {
   );
 }
 
-export default function TourOverlay({ step, onSkip, onBack, canGoBack, onForward, canGoForward, onPause, paused }) {
+export default function TourOverlay({ step, onSkip }) {
   const cardRef = useRef(null);
 
   // Fade out fully (350ms) then fade in on each step change
@@ -45,18 +45,7 @@ export default function TourOverlay({ step, onSkip, onBack, canGoBack, onForward
     <div className={styles.card} ref={cardRef}>
       <div className={styles.header}>
         <span className={styles.eyebrow}>Guided Tour</span>
-        <div className={styles.headerActions}>
-          {canGoBack && (
-            <button className={styles.navBtn} onClick={onBack}>← Back</button>
-          )}
-          <button className={styles.navBtn} onClick={onPause}>
-            {paused ? '▶' : '⏸'}
-          </button>
-          {canGoForward && (
-            <button className={styles.navBtn} onClick={onForward}>Forward →</button>
-          )}
-          <button className={styles.exitBtn} onClick={onSkip}>Exit ✕</button>
-        </div>
+        <button className={styles.exitBtn} onClick={onSkip}>Exit ✕</button>
       </div>
 
       {step.title && <h3 className={styles.title}>{step.title}</h3>}
@@ -77,6 +66,7 @@ export default function TourOverlay({ step, onSkip, onBack, canGoBack, onForward
       )}
 
       {step.body && <p className={styles.body}>{step.body}</p>}
+      {step.bodyHtml && <p className={styles.body} dangerouslySetInnerHTML={{ __html: step.bodyHtml }} />}
 
       {step.video && (
         <div className={styles.mediaBox}>
@@ -100,7 +90,7 @@ export default function TourOverlay({ step, onSkip, onBack, canGoBack, onForward
       )}
       {step.caption && <p className={styles.caption}>{step.caption}</p>}
 
-      {s && (
+      {s != null && (
         <div className={styles.statsBlock}>
           <div className={styles.statTotal}>
             <span className={styles.statNum}>{s.total}</span>

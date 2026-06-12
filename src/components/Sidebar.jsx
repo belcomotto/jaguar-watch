@@ -5,13 +5,20 @@ import MapBiomasPanel from './MapBiomasPanel';
 
 
 const LAYER_INFO = {
-  firms: {
-    description: 'Near real-time fire detections from NASA\'s VIIRS sensor aboard Suomi-NPP. Each point marks a 375 m pixel with a confirmed thermal anomaly consistent with active fire. Data is updated approximately every 3 hours.',
+  park: {
+    description: 'El Impenetrable National Park — 128,000 hectares of dry Chaco forest on the banks of the Bermejo River, officially designated in 2014, opened its doors to the first rangers on 2017. Created after the 2011 murder of Manuel Roseo and a decade of legal and conservation effort. One of Argentina\'s newest and largest national parks, and a stronghold for vast biodiversity.',
+  },
+  buffer: {
+    description: 'Buffer and monitoring zone surrounding the national park. Includes the Formosa province side of the former La Fidelidad estate — still privately held — and adjacent lands where agricultural pressure, illegal water extraction, and fire are most acute. Monitoring this zone documents the forces closing in on the protected core.',
+  },
+  pumps: {
+    description: '13 illegal water extraction sites documented along the Bermejo River, concentrated along the park\'s southern and eastern boundary. Each pump diverts water from the river to irrigate fields on the advancing agricultural and pasture frontier. Documented through satellite imagery cross-referenced with field investigation.',
     legend: [
-      { color: '#ff2200', label: 'High confidence' },
-      { color: '#ff8800', label: 'Nominal confidence' },
-      { color: '#ffcc00', label: 'Low confidence' },
+      { color: '#63412F', label: 'Documented pump site' },
     ],
+  },
+  mapbiomas: {
+    description: 'Annual land cover classification from 1985 to 2023, produced by the MapBiomas Gran Chaco initiative. Tracks how forest, agriculture, water bodies, and other land uses have shifted over four decades. Use the year slider to watch the agricultural frontier advance into native dry Chaco forest.',
   },
   gsw_seasonality: {
     description: 'Shows how many months per year surface water was present, averaged from 1984 to 2021. Values range from 1 (water appears one month per year) to 12 (permanent water present all year round).',
@@ -38,61 +45,98 @@ const LAYER_INFO = {
       { color: '#c3c3c3', label: 'Ephemeral seasonal' },
     ],
   },
+  floodGauges: {
+    description: '5 virtual gauge points on the Bermejo/Teuco, Pilcomayo, and Paraguay rivers. Discharge values are modelled by the Copernicus GloFAS ensemble (via Open-Meteo) — not gauge readings. The most reliable signal is the relative anomaly (how current flow compares to the 30-day baseline); absolute m³/s values are secondary. Colour levels — Near Baseline / Elevated / High / Very High — are model-based thresholds, not official agency warnings. Model confidence varies by river: high for the Paraguay and lower Bermejo, low for the braided, sediment-heavy Pilcomayo.',
+    legend: [
+      { color: STATUS_COLORS.normal,   label: STATUS_LABELS.normal,   round: true },
+      { color: STATUS_COLORS.advisory, label: STATUS_LABELS.advisory, round: true },
+      { color: STATUS_COLORS.watch,    label: STATUS_LABELS.watch,    round: true },
+      { color: STATUS_COLORS.warning,  label: STATUS_LABELS.warning,  round: true },
+    ],
+  },
+  inaStations: {
+    description: '6 telemetric (in territory) stations from Argentina\'s National Water Institute (INA sSIyAH network). Aguas Blancas, Embarcación, and Puerto Velaz gauge river level across the upper and lower Bermejo reaches. Puerto Lavalle provides a real observed reading to cross-check the GloFAS model. The park meteorological station monitors conditions inside El Impenetrable. Pozo Sarmiento, near the Bolivian border, is the only discharge gauge on the entire Bermejo — currently offline. That silence is the monitoring gap.',
+    legend: [
+      { color: '#4db8ff', label: 'River level gauge — active' },
+      { color: '#f0a500', label: 'Meteorological station' },
+      { color: '#6b7280', label: 'Discharge gauge — offline' },
+    ],
+  },
+  firms: {
+    description: 'Near real-time fire detections from NASA\'s VIIRS sensor aboard Suomi-NPP. Each point marks a 375 m pixel with a confirmed thermal anomaly consistent with active fire. Data is updated approximately every 3 hours.',
+    legend: [
+      { color: '#ff2200', label: 'High confidence' },
+      { color: '#ff8800', label: 'Nominal confidence' },
+      { color: '#ffcc00', label: 'Low confidence' },
+    ],
+  },
 };
 
-// Legacy alias — GSW_INFO kept as reference for existing code
-const GSW_INFO = LAYER_INFO;
 
-
-function GswLayerRow({ layer, active, onToggle }) {
-  const [open, setOpen] = useState(false);
-  const info = GSW_INFO[layer.id];
+function InfoPanel({ info }) {
+  if (!info) return null;
   return (
-    <div className={styles.gswBlock}>
-      <div className={`${styles.layerRow} ${styles.layerRowGsw} ${active ? styles.layerActive : ''}`}>
-        <button className={styles.layerToggleArea} onClick={() => onToggle(layer.id)}>
-          <span className={styles.layerSwatch}
-            style={{ background: active ? layer.color : 'transparent', borderColor: layer.color }} />
-          <span className={styles.layerLabel}>{layer.label}</span>
-          <span className={`${styles.layerDot} ${active ? styles.layerDotOn : ''}`} />
-        </button>
-        <button className={`${styles.infoBtn} ${open ? styles.infoBtnOpen : ''}`}
-          onClick={() => setOpen(o => !o)} title="Description and legend">
-          {open ? '▲' : '▼'}
-        </button>
-      </div>
-      {open && (
-        <div className={styles.gswInfo}>
-          <p className={styles.gswDesc}>{info.description}</p>
-          <div className={styles.gswLegend}>
-            {info.legend.map(({ color, label }) => (
-              <div key={label} className={styles.gswLegendRow}>
-                <span className={styles.gswSwatch} style={{ background: color }} />
-                <span className={styles.gswLegendLabel}>{label}</span>
-              </div>
-            ))}
-          </div>
+    <div className={styles.gswInfo}>
+      <p className={styles.gswDesc}>{info.description}</p>
+      {info.legend && (
+        <div className={styles.gswLegend}>
+          {info.legend.map(({ color, label, round }) => (
+            <div key={label} className={styles.gswLegendRow}>
+              <span className={styles.gswSwatch}
+                style={{ background: color, borderRadius: round ? '50%' : undefined }} />
+              <span className={styles.gswLegendLabel}>{label}</span>
+            </div>
+          ))}
         </div>
       )}
     </div>
   );
 }
 
-function LayerRow({ layer, active, onToggle }) {
+function GswLayerRow({ layer, active, onToggle }) {
+  const [open, setOpen] = useState(false);
+  const info = LAYER_INFO[layer.id];
   return (
-    <button
-      className={`${styles.layerRow} ${active ? styles.layerActive : ''}`}
-      onClick={() => onToggle(layer.id)}
-      title={layer.desc}
-    >
-      <span className={styles.layerSwatch} style={{
-        background: active ? layer.color : 'transparent',
-        borderColor: layer.color,
-        borderStyle: layer.dashed ? 'dashed' : 'solid',
-      }} />
-      <span className={styles.layerLabel}>{layer.label}</span>
-      <span className={`${styles.layerDot} ${active ? styles.layerDotOn : ''}`} />
-    </button>
+    <div className={styles.gswBlock}>
+      <div className={`${styles.layerRow} ${styles.layerRowGsw} ${active ? styles.layerActive : ''}`}>
+        <button className={styles.layerToggleArea} onClick={() => onToggle(layer.id)}>
+          <span className={styles.layerSwatch}
+            style={{
+              background: active ? layer.color : 'transparent',
+              borderColor: layer.color,
+              borderStyle: layer.dashed ? 'dashed' : 'solid',
+            }} />
+          <span className={styles.layerLabel}>{layer.label}</span>
+          <span className={`${styles.layerDot} ${active ? styles.layerDotOn : ''}`} />
+        </button>
+        {info && (
+          <button className={`${styles.infoBtn} ${open ? styles.infoBtnOpen : ''}`}
+            onClick={() => setOpen(o => !o)} title="Description and legend">
+            {open ? '▲' : '▼'}
+          </button>
+        )}
+      </div>
+      {open && <InfoPanel info={info} />}
+    </div>
+  );
+}
+
+// Info-only toggle for sections that have their own panel (e.g. MapBiomas)
+function InfoRow({ id, label }) {
+  const [open, setOpen] = useState(false);
+  const info = LAYER_INFO[id];
+  if (!info) return null;
+  return (
+    <div className={styles.gswBlock}>
+      <div className={`${styles.layerRow} ${styles.layerRowGsw}`}>
+        <span style={{ flex: 1, paddingLeft: 6, fontSize: 11, color: 'var(--sand-dim)', opacity: 0.55 }}>{label}</span>
+        <button className={`${styles.infoBtn} ${open ? styles.infoBtnOpen : ''}`}
+          onClick={() => setOpen(o => !o)} title="Description">
+          {open ? '▲' : '▼'}
+        </button>
+      </div>
+      {open && <InfoPanel info={info} />}
+    </div>
   );
 }
 
@@ -109,8 +153,8 @@ export default function Sidebar({ layers, setLayers, mapbiomas, setMapbiomas }) 
           <div className={styles.groupHeader}>
             <span className={styles.groupLabel}>Protected Areas</span>
           </div>
-          <LayerRow layer={{ id: 'park',   label: 'National Park',            color: '#ffffff', desc: 'El Impenetrable, designated 2020' }}       active={layers.park}   onToggle={toggleLayer} />
-          <LayerRow layer={{ id: 'buffer', label: 'Buffer / Monitoring Zone', color: '#ffffff', desc: 'Expanded monitoring area', dashed: true }} active={layers.buffer} onToggle={toggleLayer} />
+          <GswLayerRow layer={{ id: 'park',   label: 'National Park',            color: '#ffffff' }}             active={layers.park}   onToggle={toggleLayer} />
+          <GswLayerRow layer={{ id: 'buffer', label: 'Buffer / Monitoring Zone', color: '#ffffff', dashed: true }} active={layers.buffer} onToggle={toggleLayer} />
         </div>
 
         {/* 2 — Land Cover / MapBiomas */}
@@ -119,6 +163,7 @@ export default function Sidebar({ layers, setLayers, mapbiomas, setMapbiomas }) 
             <span className={styles.groupLabel}>Land Cover</span>
             <span className={styles.groupSub}>MapBiomas · Gran Chaco</span>
           </div>
+          <InfoRow id="mapbiomas" label="About MapBiomas" />
           <MapBiomasPanel mapbiomas={mapbiomas} setMapbiomas={setMapbiomas} />
         </div>
 
@@ -128,8 +173,8 @@ export default function Sidebar({ layers, setLayers, mapbiomas, setMapbiomas }) 
             <span className={styles.groupLabel}>Global Surface Water</span>
             <span className={styles.groupSub}>JRC / Copernicus · 1984–2021</span>
           </div>
-          <GswLayerRow layer={{ id: 'gsw_seasonality', label: 'Water Seasonality', color: '#5dacc8', gsw: true }} active={layers.gsw_seasonality} onToggle={toggleLayer} />
-          <GswLayerRow layer={{ id: 'gsw_transitions', label: 'Water Transitions', color: '#ff7f27', gsw: true }} active={layers.gsw_transitions} onToggle={toggleLayer} />
+          <GswLayerRow layer={{ id: 'gsw_seasonality', label: 'Water Seasonality', color: '#5dacc8' }} active={layers.gsw_seasonality} onToggle={toggleLayer} />
+          <GswLayerRow layer={{ id: 'gsw_transitions', label: 'Water Transitions',  color: '#ff7f27' }} active={layers.gsw_transitions} onToggle={toggleLayer} />
         </div>
 
         {/* 4 — Illegal Extraction */}
@@ -137,7 +182,7 @@ export default function Sidebar({ layers, setLayers, mapbiomas, setMapbiomas }) 
           <div className={styles.groupHeader}>
             <span className={styles.groupLabel}>Illegal Extraction</span>
           </div>
-          <LayerRow layer={{ id: 'pumps', label: 'Illegal Pump Sites', color: '#63412F', desc: '13 documented sites on the Bermejo' }} active={layers.pumps} onToggle={toggleLayer} />
+          <GswLayerRow layer={{ id: 'pumps', label: 'Illegal Pump Sites', color: '#63412F' }} active={layers.pumps} onToggle={toggleLayer} />
         </div>
 
         {/* 5 — Flood Monitoring */}
@@ -146,34 +191,25 @@ export default function Sidebar({ layers, setLayers, mapbiomas, setMapbiomas }) 
             <span className={styles.groupLabel}>Flood Monitoring</span>
             <span className={styles.groupSub}>GloFAS · Bermejo–Paraná</span>
           </div>
-          <LayerRow
-            layer={{ id: 'floodGauges', label: 'River Gauges', color: STATUS_COLORS.normal, desc: '10 monitoring stations' }}
-            active={layers.floodGauges}
-            onToggle={toggleLayer}
-          />
-          {layers.floodGauges && (
-            <div className={styles.gswInfo} style={{ paddingTop: 6 }}>
-              <p className={styles.gswDesc} style={{ marginBottom: 6 }}>
-                10 stations · Bermejo, Pilcomayo, Paraguay, Paraná.
-                Status updates live once Flood Hub API is connected.
-              </p>
-              {Object.entries(STATUS_COLORS).filter(([k]) => k !== 'pending').map(([key, color]) => (
-                <div key={key} className={styles.gswLegendRow}>
-                  <span className={styles.gswSwatch} style={{ background: color, borderRadius: '50%' }} />
-                  <span className={styles.gswLegendLabel}>{STATUS_LABELS[key]}</span>
-                </div>
-              ))}
-            </div>
-          )}
+          <GswLayerRow layer={{ id: 'floodGauges', label: 'River Gauges', color: STATUS_COLORS.normal }} active={layers.floodGauges} onToggle={toggleLayer} />
         </div>
 
-        {/* 6 — Fire Monitoring */}
+        {/* 6 — INA Telemetric Stations */}
+        <div className={styles.layerGroup}>
+          <div className={styles.groupHeader}>
+            <span className={styles.groupLabel}>INA Telemetric (In Territory) Stations</span>
+            <span className={styles.groupSub}>INA sSIyAH · Observed data · 6 stations</span>
+          </div>
+          <GswLayerRow layer={{ id: 'inaStations', label: 'INA Stations', color: '#4db8ff' }} active={layers.inaStations} onToggle={toggleLayer} />
+        </div>
+
+        {/* 7 — Fire Monitoring */}
         <div className={styles.layerGroup}>
           <div className={styles.groupHeader}>
             <span className={styles.groupLabel}>Fire Monitoring</span>
             <span className={styles.groupSub}>NASA FIRMS · VIIRS S-NPP · 5 days</span>
           </div>
-          <GswLayerRow layer={{ id: 'firms', label: 'Active Fire Alerts', color: '#ff4400', gsw: true }} active={layers.firms} onToggle={toggleLayer} />
+          <GswLayerRow layer={{ id: 'firms', label: 'Active Fire Alerts', color: '#ff4400' }} active={layers.firms} onToggle={toggleLayer} />
         </div>
 
         <div className={styles.legend}>

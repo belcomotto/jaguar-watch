@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import MapView from './components/MapView';
 import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
@@ -7,7 +7,10 @@ import LegislationView from './components/LegislationView';
 import AnalyzeView from './components/AnalyzeView';
 import WelcomeModal from './components/WelcomeModal';
 import TourOverlay from './components/TourOverlay';
+import KeyboardHintOverlay from './components/KeyboardHintOverlay';
 import { useFirmsData } from './hooks/useFirmsData';
+import { useFloodData } from './hooks/useFloodData';
+import { useInaGaugeData } from './hooks/useInaGaugeData';
 import { useTour } from './hooks/useTour';
 
 const DEFAULT_LAYERS = {
@@ -18,10 +21,11 @@ const DEFAULT_LAYERS = {
   gsw_seasonality: false,
   gsw_transitions: false,
   floodGauges: false,
+  inaStations: false,
 };
 
 const EXPLORE_LAYERS = { ...DEFAULT_LAYERS, park: true, buffer: true, pumps: true };
-const POST_TOUR_LAYERS = { ...DEFAULT_LAYERS, park: true, buffer: true, pumps: true, floodGauges: true, firms: true };
+const POST_TOUR_LAYERS = { ...DEFAULT_LAYERS, park: true, buffer: true, pumps: true, floodGauges: true, firms: true, inaStations: true };
 
 function buildMonths() {
   const months = [];
@@ -43,6 +47,7 @@ export default function App() {
   const [tourPhase, setTourPhase] = useState(null);
   const [activeTab, setActiveTab] = useState(null);
   const [layers, setLayers] = useState(DEFAULT_LAYERS);
+  const [showKeyboardHint, setShowKeyboardHint] = useState(false);
   const [sentinel] = useState({
     enabled: false,
     band: 'true-color',
@@ -52,30 +57,46 @@ export default function App() {
   const mapRef = useRef(null);
 
   const { rows: firmsRows, geojson: firmsGeoJSON, loading: firmsLoading, error: firmsError, fetchedAt: firmsFetchedAt } = useFirmsData();
+  const { gauges: floodGauges, geojson: floodGeoJSON } = useFloodData();
+  const { stations: inaStations, geojson: inaGeoJSON, loading: inaLoading } = useInaGaugeData();
 
   const firmsStats = useMemo(() => {
-    if (!firmsRows?.length) return null;
-    const high    = firmsRows.filter(r => r.confidence === 'h' || r.confidence === 'high').length;
-    const low     = firmsRows.filter(r => r.confidence === 'l' || r.confidence === 'low').length;
-    const nominal = firmsRows.length - high - low;
-    const lastDetection = [...firmsRows.map(r => r.acq_date).filter(Boolean)].sort().at(-1);
-    return { total: firmsRows.length, high, nominal, low, lastDetection, fetchedAt: firmsFetchedAt?.toLocaleTimeString() };
+    const rows = firmsRows ?? [];
+    const high    = rows.filter(r => r.confidence === 'h' || r.confidence === 'high').length;
+    const low     = rows.filter(r => r.confidence === 'l' || r.confidence === 'low').length;
+    const nominal = rows.length - high - low;
+    const lastDetection = rows.length ? [...rows.map(r => r.acq_date).filter(Boolean)].sort().at(-1) : null;
+    return { total: rows.length, high, nominal, low, lastDetection, fetchedAt: firmsFetchedAt?.toLocaleTimeString() };
   }, [firmsRows, firmsFetchedAt]);
 
   const handleTourComplete = useCallback(() => {
     setTourPhase('exploring');
+    setShowKeyboardHint(false);
     setActiveTab('Discover');
     setLayers(POST_TOUR_LAYERS);
   }, []);
 
-  const { overlay, startTour, stopTour, goBack, canGoBack, goForward, canGoForward, togglePause, paused } = useTour(mapRef, { onComplete: handleTourComplete, firmsStats });
+  const { overlay, startTour, stopTour, goBack, goForward, togglePause, paused } = useTour(mapRef, { onComplete: handleTourComplete, firmsStats, floodGauges, inaStations });
 
   const handleIntroComplete = useCallback(() => setTourPhase('welcome'), []);
 
   const handleTakeTour = useCallback(() => {
     setTourPhase('touring');
+    setShowKeyboardHint(true);
     startTour();
   }, [startTour]);
+
+  // Keyboard controls — Space=pause, ArrowLeft=back, ArrowRight=forward
+  useEffect(() => {
+    if (tourPhase !== 'touring') return;
+    const onKey = (e) => {
+      if (e.code === 'Space')      { e.preventDefault(); togglePause(); }
+      if (e.code === 'ArrowLeft')  { e.preventDefault(); goBack(); }
+      if (e.code === 'ArrowRight') { e.preventDefault(); goForward(); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [tourPhase, togglePause, goBack, goForward]);
 
   const handleExplore = useCallback(() => {
     setTourPhase('exploring');
@@ -86,6 +107,7 @@ export default function App() {
   const handleSkipTour = useCallback(() => {
     stopTour();
     setTourPhase('exploring');
+    setShowKeyboardHint(false);
     setActiveTab('Discover');
     setLayers(EXPLORE_LAYERS);
   }, [stopTour]);
@@ -98,6 +120,10 @@ export default function App() {
         sentinel={sentinel}
         months={MONTHS}
         firmsGeoJSON={firmsGeoJSON}
+        floodGeoJSON={floodGeoJSON}
+        floodGauges={floodGauges}
+        inaGeoJSON={inaGeoJSON}
+        inaStations={inaStations}
         mapbiomas={mapbiomas}
         onIntroComplete={handleIntroComplete}
       />
@@ -123,6 +149,8 @@ export default function App() {
           firmsFetchedAt={firmsFetchedAt}
           mapbiomas={mapbiomas}
           setMapbiomas={setMapbiomas}
+          inaStations={inaStations}
+          inaLoading={inaLoading}
         />
       )}
 
@@ -131,16 +159,25 @@ export default function App() {
       )}
 
       {tourPhase === 'touring' && (
-        <TourOverlay
-          step={overlay}
-          onSkip={handleSkipTour}
-          onBack={goBack}
-          canGoBack={canGoBack}
-          onForward={goForward}
-          canGoForward={canGoForward}
-          onPause={togglePause}
-          paused={paused}
-        />
+        <>
+          <TourOverlay step={overlay} onSkip={handleSkipTour} />
+          <KeyboardHintOverlay show={showKeyboardHint} />
+          <div style={{
+            position: 'fixed', top: '50%', left: '50%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 30,
+            width: 76, height: 76,
+            borderRadius: '50%',
+            background: 'rgba(6,10,18,0.62)',
+            border: '1.5px solid rgba(222,216,207,0.28)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 30, color: 'rgba(222,216,207,0.92)',
+            opacity: paused ? 1 : 0,
+            transition: 'opacity 0.35s ease',
+            pointerEvents: 'none',
+            userSelect: 'none',
+          }}>⏸</div>
+        </>
       )}
     </div>
   );

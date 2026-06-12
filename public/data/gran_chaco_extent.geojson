@@ -1,0 +1,26 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Gran Chaco — MapBiomas extent",
+        "source": "MapBiomas Gran Chaco Collection 5",
+        "crs": "WGS 84",
+        "note": "Bounding box of the MapBiomas Gran Chaco land-cover raster used in this project. Derived from rasterio metadata of the source .tif files."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-67.72560623728215, -17.536012661297182],
+            [-55.75654322320206, -17.536012661297182],
+            [-55.75654322320206, -33.87358290205051],
+            [-67.72560623728215, -33.87358290205051],
+            [-67.72560623728215, -17.536012661297182]
+          ]
+        ]
+      }
+    }
+  ]
+}

@@ -1,5 +1,47 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { GAUGES, toGeoJSON } from '../data/floodGauges';
+import mapboxgl from 'mapbox-gl';
+import { GAUGES, toGeoJSON, STATUS_COLORS, STATUS_LABELS } from '../data/floodGauges';
+import { INA_STATIONS, toGeoJSON as inaToGeoJSON, INA_TYPE_COLOR, INA_TYPE_LABEL } from '../data/inaGauges';
+
+// ── Tour map-popup HTML builders (compact, shown during animation) ────────────
+
+function buildTourFloodPopupHtml(g) {
+  const color = STATUS_COLORS[g.status] || STATUS_COLORS.pending;
+  const label = STATUS_LABELS[g.status] || 'Awaiting data';
+  const isPending = g.status === 'pending' || g.status === 'error' || g.discharge == null;
+  const pctSign = g.baselinePct != null ? (g.baselinePct >= 0 ? `+${g.baselinePct}%` : `${g.baselinePct}%`) : '';
+  return `<div style="font-family:'IM Fell Double Pica',serif;padding:8px 12px;min-width:180px">
+    <p style="font-size:14px;color:#DED8CF;margin:0 0 2px"><strong>${g.river} · ${g.location}</strong></p>
+    <p style="font-size:11px;color:#888;margin:0 0 7px">${g.country}</p>
+    <p style="font-size:12px;color:${color};margin:0">● ${label}</p>
+    ${!isPending ? `<p style="font-size:12px;color:#aaa;margin:3px 0 0">${g.discharge} m³/s · ${pctSign} vs baseline</p>` : ''}
+  </div>`;
+}
+
+function buildTourInaPopupHtml(s) {
+  const color = INA_TYPE_COLOR[s.type] || '#888';
+  const typeLabel = INA_TYPE_LABEL[s.type] || s.type;
+  const isPending = s.status === 'pending' || s.status == null;
+  let detail = '';
+  if (!isPending) {
+    if (s.type === 'river_level' && s.level != null)
+      detail = `<p style="font-size:12px;color:#aaa;margin:3px 0 0">${s.level} m · ${s.tendency || '—'}</p>`;
+    else if (s.type === 'meteo' && s.temp != null)
+      detail = `<p style="font-size:12px;color:#aaa;margin:3px 0 0">${s.temp}°C${s.humidity != null ? ' · ' + s.humidity + '% hum' : ''}</p>`;
+    else if (s.type === 'discharge_gauge_offline')
+      detail = `<p style="font-size:12px;color:#dc2626;margin:3px 0 0">Offline${s.daysSinceUpdate != null ? ' · ' + s.daysSinceUpdate + ' days since last data' : ''}</p>`;
+  }
+  return `<div style="font-family:'IM Fell Double Pica',serif;padding:8px 12px;min-width:190px">
+    <p style="font-size:14px;color:#DED8CF;margin:0 0 2px"><strong>${s.name}</strong></p>
+    <p style="font-size:11px;color:#888;margin:0 0 5px">${typeLabel}</p>
+    <p style="font-size:12px;color:${color};margin:0">● ${
+      s.type === 'discharge_gauge_offline' ? 'OFFLINE'
+      : s.status === 'ok' ? 'ACTIVE'
+      : isPending ? 'LOADING…' : String(s.status).toUpperCase()
+    }</p>
+    ${detail}
+  </div>`;
+}
 
 const INGJUAREZ_PATH = [
   { center: [-62.22304284, -24.13589335], bearing: 18.65, zoom: 14.4 },
@@ -215,7 +257,6 @@ async function gswFadeOut(pause, map, layerId, steps = 14) {
 
 async function flyPath(ease, pause, path, pitch = 38, lineAnim = null) {
   const n = path.length;
-  // Monotonic cursor shared across all steps — only ever advances forward
   let revealedIdx = 0;
 
   for (let i = 0; i < n; i++) {
@@ -234,8 +275,6 @@ async function flyPath(ease, pause, path, pitch = 38, lineAnim = null) {
       const { map, sourceId, coords } = lineAnim;
       const t0 = Date.now();
       const loop = () => {
-        // Find the closest coord to the camera's current position,
-        // searching only forward so the cursor never snaps backward.
         const { lng, lat } = map.getCenter();
         let bestIdx = revealedIdx;
         let minDist = Infinity;
@@ -265,42 +304,38 @@ async function flyPath(ease, pause, path, pitch = 38, lineAnim = null) {
 }
 
 // ── Phase functions ────────────────────────────────────────────────────────
-// Each phase is self-contained: resets relevant layers, sets overlay, animates.
 
 async function phasePark({ go, ease, pause, map, setOverlay }) {
   vis(map, ['buffer-fill','buffer-line','buffer-label',
             'pumps-icon','pumps-halo',
             'flood-halo','flood-icon',
+            'ina-halo','ina-icon',
             'firms-halo','firms-icon'], false);
   gswReset(map, 'gsw_seasonality-layer');
   gswReset(map, 'gsw_transitions-layer');
   vis(map, ['park-fill','park-line','park-label'], true);
 
-  // No popup during dive or zoom-out
   setOverlay(null);
 
-  // Dive to ground level at park centre (2.5 s)
   await go({
     center: [-61.09, -24.95],
     zoom: 15, pitch: 0, bearing: 0,
     duration: 2500,
     easing: t => 1 - Math.pow(1 - t, 3),
   });
-  // Pull back to reveal the park polygon (3 s) — still no popup
   await ease({
     zoom: 8.5, pitch: 42, bearing: 20,
     duration: 3000,
     easing: t => t,
   });
-  // Popup appears once zoom-out lands — hold for all 12 images to cycle (12 × 1 s)
   setOverlay({
     id: 'park',
     title: 'El Impenetrable',
     subtitle: 'National Park',
-    body: ' Here, 128,000 hectares of dry Chaco forest stretch to the horizon — knotted quebracho, palo santo and algarrobo so dense and thorny they gave this land its name: the Impenetrable. Protected by national law in 2014, in 2017 the first rangers sat foot inside. Ancient wilderness — only newly defended.',
+    body: ' Here, 128,000 hectares of dry Chaco forest stretch to the horizon — knotted quebracho, palo santo and algarrobo so dense and thorny they gave this land its name: the Impenetrable. Protected by national law in 2014, in 2017 the first rangers sat foot inside.',
     images: PARK_IMAGES,
   });
-  await pause(12000); // 12 images × 1 s each
+  await pause(12000);
 }
 
 async function phaseBuffer({ go, ease, map, setOverlay }) {
@@ -308,12 +343,13 @@ async function phaseBuffer({ go, ease, map, setOverlay }) {
             'buffer-fill','buffer-line','buffer-label'], true);
   vis(map, ['pumps-icon','pumps-halo',
             'flood-halo','flood-icon',
+            'ina-halo','ina-icon',
             'firms-halo','firms-icon'], false);
   setOverlay({
     id: 'buffer',
     title: 'Buffer Zone',
     subtitle: 'Monitoring Corridor',
-    body: 'Beyond the park\'s edge lies its cushion. Developing a Buffer Area alongside local communities is what could help to mitigate the pressure from outside, giving the wildlife that shelters in the park room to roam, breed and move safely. ',
+    body: 'Beyond the park\'s edge lies its cushion. Developing a Buffer Area alongside local communities is what will help to mitigate the pressure from outside, giving the wildlife that shelters in the park room to roam, breed and move safely. ',
     images: BUFFER_IMAGES,
   });
   await go({
@@ -322,13 +358,11 @@ async function phaseBuffer({ go, ease, map, setOverlay }) {
     duration: 3500,
     easing: t => 1 - Math.pow(1 - t, 3),
   });
-  // CW 360° via 3×120° arcs (avoids the ambiguous ±180° flip)
   await ease({ bearing: 120,  duration: 5000, easing: t => t });
   await ease({ bearing: 240,  duration: 5000, easing: t => t });
   await ease({ bearing: 360,  duration: 5000, easing: t => t });
 }
 
-// Full Gran Chaco raster corners (EPSG:4326) — matches the generated PNG extent
 const MB_COORDS = [
   [-67.72560623728215, -17.536012661297182],
   [-55.75654322320206, -17.536012661297182],
@@ -337,18 +371,16 @@ const MB_COORDS = [
 ];
 
 async function phaseMapbiomas({ go, pause, map, setOverlay }) {
-  // Turn off all vector layers; park stays on for reference
   vis(map, ['buffer-fill','buffer-line','buffer-label',
             'pumps-icon','pumps-halo',
             'flood-halo','flood-icon',
+            'ina-halo','ina-icon',
             'firms-halo','firms-icon'], false);
   vis(map, ['park-fill','park-line','park-label'], true);
 
-  // Turn off any leftover mapbiomas visibility from a previous run
   if (map.getLayer('mapbiomas-layer'))
     map.setPaintProperty('mapbiomas-layer', 'raster-opacity', 0);
 
-  // Pull back to a Gran Chaco overview centred on the park
   await go({
     center: [-62.5, -26.0],
     zoom: 5.5, pitch: 0, bearing: 0,
@@ -356,7 +388,6 @@ async function phaseMapbiomas({ go, pause, map, setOverlay }) {
     easing: t => 1 - Math.pow(1 - t, 3),
   });
 
-  // Show 1985 baseline and set overlay
   const src = map.getSource('mapbiomas');
   if (src) {
     src.updateImage({ url: '/data/mapbiomas/mapbiomas_1985.png', coordinates: MB_COORDS });
@@ -371,12 +402,11 @@ async function phaseMapbiomas({ go, pause, map, setOverlay }) {
       { color: '#db4fba', label: 'Cropland' },
       { color: '#ffd700', label: 'Pasture' },
     ],
-    body: 'Watch four decades collapse into seconds. The agricultural frontier, closing in from every side — and as it advances, the Gran Chaco fractures into ever-smaller fragments.',
+    body: 'The agricultural frontier, closing in from every side (seen in pink and yellow) — and as it advances, the Gran Chaco fractures into ever-smaller fragments. El Impenetrable is left as the last oasis of dry forest still whole enough to shelter its wildlife - it has become the final refuge in a landscape being pulled apart.',
   });
 
-  await pause(2500); // let first frame settle
+  await pause(2500);
 
-  // Animate 1985 → 2023 at 500 ms/frame
   for (let year = 1985; year <= 2023; year++) {
     const s = map.getSource('mapbiomas');
     if (s) s.updateImage({ url: `/data/mapbiomas/mapbiomas_${year}.png`, coordinates: MB_COORDS });
@@ -384,15 +414,15 @@ async function phaseMapbiomas({ go, pause, map, setOverlay }) {
     await pause(500);
   }
 
-  await pause(2000); // hold on 2023
+  await pause(2000);
 
-  // Fade out before transitioning to next phase
   if (map.getLayer('mapbiomas-layer'))
     map.setPaintProperty('mapbiomas-layer', 'raster-opacity', 0);
 }
 
-async function phaseRiver({ go, ease, pause, map, setOverlay }) {
-  // Ensure mapbiomas and GSW layers are off (in case we jumped here via Back)
+// ── River phases (3 individual phases) ───────────────────────────────────────
+
+async function phaseRiverIntro({ go, ease, map, setOverlay }) {
   if (map.getLayer('mapbiomas-layer'))
     map.setPaintProperty('mapbiomas-layer', 'raster-opacity', 0);
   gswReset(map, 'gsw_seasonality-layer');
@@ -401,14 +431,14 @@ async function phaseRiver({ go, ease, pause, map, setOverlay }) {
             'buffer-fill','buffer-line','buffer-label',
             'pumps-icon','pumps-halo',
             'flood-halo','flood-icon',
+            'ina-halo','ina-icon',
             'firms-halo','firms-icon'], false);
 
-  // ── Diagonal flight + first straight — Bermejo intro (no filters) ────────
   setOverlay({
     id: 'river',
     title: 'The Bermejo River',
     subtitle: null,
-    body: 'The Bermejo — known here by its older name, the Teuco — winds more than 1,000 km of restless, shifting channels along the park\'s northern edge. We follow it upstream, west, to the first place where its water is being drawn.',
+    body: 'The Bermejo — known here by its older name, the Teuco — winds more than 1,000 km of shifting channels along the park\'s northern edge. We follow it upstream, west, to the first place where its water is being drawn.',
     video: '/media/bermejo-popup.mov',
   });
   await go({
@@ -417,46 +447,71 @@ async function phaseRiver({ go, ease, pause, map, setOverlay }) {
     duration: 5000,
     easing: t => 1 - Math.pow(1 - t, 4),
   });
-  // First straight segment — duration matched to bermejo-popup.mov (18.79s total: 5s go + 13.8s ease)
   await ease({ center: [-61.75, -24.40], bearing: 288, zoom: 11.5, pitch: 67, duration: 13800, easing: t => t });
+}
 
-  // ── Water Seasonality ────────────────────────────────────────────────────
+async function phaseRiverSeasonality({ go, ease, pause, map, setOverlay }) {
+  gswReset(map, 'gsw_transitions-layer');
+  if (map.getLayer('mapbiomas-layer'))
+    map.setPaintProperty('mapbiomas-layer', 'raster-opacity', 0);
+
+  // Quick entry shot so Back navigation lands at a sensible position
+  await go({
+    center: [-61.75, -24.40], bearing: 288, zoom: 11.5, pitch: 67,
+    duration: 1500,
+    easing: t => 1 - Math.pow(1 - t, 3),
+  });
+
   await gswFadeIn(pause, map, 'gsw_seasonality-layer');
   setOverlay({
     id: 'river-seasonality',
     title: 'Water Seasonality',
     subtitle: '1984–2021 · Global Surface Water',
-    body: 'Water seasonality shows how many months per year surface water was present, averaged from 1984 to 2021. Light blue corresponds to 1 month per year, showing us the changing nature of the Bermejo.',
+    legend: [
+      { color: '#c7e9f7', label: '1 month / year' },
+      { color: '#5dacc8', label: '6 months / year' },
+      { color: '#0d47a1', label: '12 months — permanent' },
+    ],
+    body: 'Water seasonality shows how many months per year surface water was present, averaged from 1984 to 2021. The Bermejo pulses — pale blue where it appears only seasonally, deepening to permanent dark blue at its stable core.',
   });
   await ease({ center: [-62.05, -24.25], bearing: 285, zoom: 11.5, pitch: 68, duration: 10000, easing: t => t });
+}
 
-  // ── Water Transitions ────────────────────────────────────────────────────
-  await gswFadeOut(pause, map, 'gsw_seasonality-layer');
+async function phaseRiverTransitions({ go, ease, pause, map, setOverlay }) {
+  gswReset(map, 'gsw_seasonality-layer');
+
+  // Quick entry shot
+  await go({
+    center: [-62.05, -24.25], bearing: 285, zoom: 11.5, pitch: 68,
+    duration: 1500,
+    easing: t => 1 - Math.pow(1 - t, 3),
+  });
+
   await gswFadeIn(pause, map, 'gsw_transitions-layer');
   setOverlay({
     id: 'river-transitions',
     title: 'Water Transitions',
     subtitle: '1984–2021 · Global Surface Water',
     legend: [
-      { color: '#b5e61d', label: 'New seasonal' },
-      { color: '#e6194b', label: 'Lost seasonal' },
-      { color: '#c3c3c3', label: 'Ephemeral seasonal' },
+      { color: '#b5e61d', label: 'New path' },
+      { color: '#e6194b', label: 'Lost path' },
+      { color: '#c3c3c3', label: 'General path' },
     ],
     body: 'The Bermejo river is alive, it pulses with every season. The color coding of these images shows us how each season creates new shapes on its course.',
   });
   await ease({ center: [-62.34, -24.11], bearing: 280, zoom: 12.0, pitch: 68, duration: 8000, easing: t => t });
 
-  // Fade out before turning to face pumps
   await gswFadeOut(pause, map, 'gsw_transitions-layer');
-
-  // 180° turn — now facing east, ready to tour pumps west → east
   await ease({ bearing: 100, zoom: 13.5, pitch: 72, duration: 3500, easing: t => 1 - Math.pow(1 - t, 3) });
 }
 
-async function phasePumps({ go, ease, pause, map, setOverlay, setLitPumps }) {
+// ── Pump phases (1 intro + 13 individual) ────────────────────────────────────
+
+function pumpBaseSetup(map, setLitPumps, setOverlay, pumpIdx) {
   vis(map, ['park-fill','park-line','park-label',
             'buffer-fill','buffer-line','buffer-label',
             'flood-halo','flood-icon',
+            'ina-halo','ina-icon',
             'firms-halo','firms-icon',
             'waterpath-ingjuarez-layer',
             'waterpath-lagyema-layer',
@@ -465,30 +520,30 @@ async function phasePumps({ go, ease, pause, map, setOverlay, setLitPumps }) {
   gswReset(map, 'gsw_transitions-layer');
   vis(map, ['pumps-icon','pumps-halo'], true);
   vis(map, ['overlay-place-labels'], true);
-  setLitPumps([]);
-
-  // Pre-fetch all water path coords indexed by layer id
-  const waterLineCache = {};
-  for (const p of PUMP_SEQUENCE) {
-    if (p.waterPathFile && p.waterPathLayer) {
-      try {
-        const r = await fetch(p.waterPathFile);
-        const gj = await r.json();
-        waterLineCache[p.waterPathLayer] = gj.features[p.waterPathFeatureIdx ?? 0]?.geometry?.coordinates ?? null;
-      } catch { /* graceful fallback */ }
-    }
+  if (pumpIdx != null) {
+    setLitPumps(PUMP_SEQUENCE.slice(0, pumpIdx + 1));
+  } else {
+    setLitPumps([]);
   }
+  setOverlay(null);
+}
+
+async function phasePumpsIntro({ pause, map, setOverlay, setLitPumps }) {
+  pumpBaseSetup(map, setLitPumps, setOverlay, null);
 
   setOverlay({
     id: 'pumps-intro',
     title: 'Illegal Extraction Sites',
     subtitle: null,
-    body: 'Thirteen points along the river draw its water — some are registered town and community supplies,others are unregistered pumps feeding cattle pasture and crops. Together they tap the same artery the park and its biodiversity depend on, with little or no monitoring of how much is taken — or what it leaves behind.',
+    body: 'Thirteen points along the river draw its water — some are registered town and community supplies, others are unregistered pumps feeding cattle pasture and crops. Together they tap the same artery the park and its biodiversity depend on, with little or no monitoring of how much is taken — or what it leaves behind.',
   });
-  await pause(6500);
+  await pause(9500); // 6500 + 3000 extra
+}
 
-  const lit = [];
-  for (let i = 0; i < PUMP_SEQUENCE.length; i++) {
+function makePumpPhase(i) {
+  return async function({ go, ease, pause, map, setOverlay, setLitPumps }) {
+    pumpBaseSetup(map, setLitPumps, setOverlay, i);
+
     const pump = PUMP_SEQUENCE[i];
     const [lng, lat] = pump.coords;
     await go({
@@ -498,11 +553,18 @@ async function phasePumps({ go, ease, pause, map, setOverlay, setLitPumps }) {
       duration: 2800,
       easing: t => 1 - Math.pow(1 - t, 3),
     });
-    lit.push(pump);
-    setLitPumps([...lit]);
     setOverlay({ id: `pump-${i}`, ...pump });
     await pause(SHORT_PAUSE_INDICES.has(i) ? 1750 : 3500);
+
     if (pump.path) {
+      let waterLineCoords = null;
+      if (pump.waterPathFile && pump.waterPathLayer) {
+        try {
+          const r = await fetch(pump.waterPathFile);
+          const gj = await r.json();
+          waterLineCoords = gj.features[pump.waterPathFeatureIdx ?? 0]?.geometry?.coordinates ?? null;
+        } catch { /* graceful fallback */ }
+      }
       if (pump.waterPathLayer) {
         vis(map, [pump.waterPathLayer], true);
         const sourceId = pump.waterPathLayer.replace('-layer', '');
@@ -510,12 +572,11 @@ async function phasePumps({ go, ease, pause, map, setOverlay, setLitPumps }) {
         if (wlSrc) wlSrc.setData({ type: 'FeatureCollection', features: [] });
       }
       const sourceId = pump.waterPathLayer?.replace('-layer', '');
-      const lineAnim = (pump.waterPathLayer && waterLineCache[pump.waterPathLayer])
-        ? { map, sourceId, coords: waterLineCache[pump.waterPathLayer] }
+      const lineAnim = (pump.waterPathLayer && waterLineCoords)
+        ? { map, sourceId, coords: waterLineCoords }
         : null;
       await flyPath(ease, pause, pump.path, 38, lineAnim);
       if (pump.waterPathLayer) {
-        // Zoom out to show the full water trace, then return to the river
         const zo = pump.waterPathZoomOut;
         await ease({
           center: zo.center,
@@ -527,13 +588,16 @@ async function phasePumps({ go, ease, pause, map, setOverlay, setLitPumps }) {
         vis(map, [pump.waterPathLayer], false);
       }
     }
-  }
+  };
 }
 
-async function phaseGauges({ go, pause, map, setOverlay, setLitPumps }) {
+const PUMP_PHASES = [phasePumpsIntro, ...PUMP_SEQUENCE.map((_, i) => makePumpPhase(i))];
+
+async function phaseGauges({ go, pause, map, setOverlay, setLitPumps, floodGaugesRef, addTourPopup }) {
   vis(map, ['pumps-icon','pumps-halo',
             'buffer-fill','buffer-line','buffer-label',
             'firms-halo','firms-icon',
+            'ina-halo','ina-icon',
             'overlay-place-labels',
             'waterpath-ingjuarez-layer',
             'waterpath-lagyema-layer',
@@ -550,19 +614,78 @@ async function phaseGauges({ go, pause, map, setOverlay, setLitPumps }) {
   });
   await pause(600);
 
+  const liveGauges = floodGaugesRef?.current ?? [];
+  const displayGauges = liveGauges.length ? liveGauges : GAUGES;
   const gaugeSrc = map.getSource('flood-gauges');
-  if (gaugeSrc) gaugeSrc.setData(toGeoJSON(GAUGES));
+  if (gaugeSrc) gaugeSrc.setData(toGeoJSON(displayGauges));
   vis(map, ['flood-halo','flood-icon'], true);
+
   setOverlay({
     id: 'gauges',
     title: 'Flood Monitoring',
     subtitle: 'GloFAS · Copernicus Emergency Management',
-    body: 'The river is restless. These stations track its rising and falling across the Bermejo–Paraná basin, watched in near real-time from orbit. Carrying one of the heaviest sediment loads on the continent,the Bermejo floods hard and often — remaking its own course as it goes.',
+    bodyHtml: 'The river is restless. These are not on site stations but rather <strong>modeled stations</strong> that track rising and falling across the Bermejo–Paraná basin, watched in <strong>near real-time from orbit.</strong> Carrying one of the heaviest sediment loads on the continent, the Bermejo floods hard and often — remaking its own course as it goes.',
   });
-  await pause(5500);
+
+  // Fade in an individual popup at each gauge position
+  displayGauges.forEach(g => {
+    const popup = new mapboxgl.Popup({ closeButton: false, closeOnClick: false, offset: 16 })
+      .setLngLat(g.coordinates)
+      .setHTML(buildTourFloodPopupHtml(g))
+      .addTo(map);
+    addTourPopup(popup);
+  });
+
+  await pause(7000);
+}
+
+async function phaseInaGauges({ go, pause, map, setOverlay, inaStationsRef, addTourPopup }) {
+  vis(map, ['pumps-icon','pumps-halo',
+            'buffer-fill','buffer-line','buffer-label',
+            'firms-halo','firms-icon',
+            'overlay-place-labels',
+            'waterpath-ingjuarez-layer',
+            'waterpath-lagyema-layer',
+            'waterpath-wichipintado-layer'], false);
+  vis(map, ['park-fill','park-line','park-label',
+            'flood-halo','flood-icon'], true);
+  setOverlay(null);
+
+  await go({
+    center: [-62.0, -24.6],
+    zoom: 6.2, pitch: 12, bearing: 0,
+    duration: 4500,
+    easing: t => 1 - Math.pow(1 - t, 3),
+  });
+  await pause(500);
+
+  const liveStations = inaStationsRef?.current ?? [];
+  const displayStations = liveStations.length ? liveStations : INA_STATIONS;
+  const inaSrc = map.getSource('ina-stations');
+  if (inaSrc) inaSrc.setData(inaToGeoJSON(displayStations));
+  vis(map, ['ina-halo','ina-icon'], true);
+
+  setOverlay({
+    id: 'ina-gauges',
+    title: 'The Monitoring Gap',
+    subtitle: 'INA sSIyAH · Telemetric (In Territory)',
+    body: 'Six telemetric (in territory) stations cover the Bermejo corridor. Three gauge river level across the upper reaches — Aguas Blancas at the Bolivian border, Embarcación, and Puerto Velaz. Puerto Lavalle, 121 km downstream of the park, provides the ground-truth reading that cross-checks the satellite models. Inside the park, a meteorological station watches conditions. And Pozo Sarmiento holds the only discharge gauge on the whole Bermejo — currently silent. That silence is the monitoring gap.',
+  });
+
+  // Fade in an individual popup at each station
+  displayStations.forEach(s => {
+    const popup = new mapboxgl.Popup({ closeButton: false, closeOnClick: false, offset: 16 })
+      .setLngLat(s.coordinates)
+      .setHTML(buildTourInaPopupHtml(s))
+      .addTo(map);
+    addTourPopup(popup);
+  });
+
+  await pause(9000);
 }
 
 async function phaseFires({ pause, map, setOverlay, firmsStatsRef }) {
+  vis(map, ['ina-halo','ina-icon'], false);
   vis(map, ['buffer-fill','buffer-line','buffer-label',
             'firms-halo','firms-icon'], true);
   setOverlay({
@@ -575,11 +698,23 @@ async function phaseFires({ pause, map, setOverlay, firmsStatsRef }) {
   await pause(5500);
 }
 
-const PHASES = [phasePark, phaseBuffer, phaseMapbiomas, phaseRiver, phasePumps, phaseGauges, phaseFires];
+// 3 river phases + 14 pump phases (1 intro + 13 individual) = 6 + 14 = 23 total
+const PHASES = [
+  phasePark,
+  phaseBuffer,
+  phaseMapbiomas,
+  phaseRiverIntro,
+  phaseRiverSeasonality,
+  phaseRiverTransitions,
+  ...PUMP_PHASES,
+  phaseGauges,
+  phaseInaGauges,
+  phaseFires,
+];
 
 // ── Hook ──────────────────────────────────────────────────────────────────
 
-export function useTour(mapRef, { onComplete, firmsStats } = {}) {
+export function useTour(mapRef, { onComplete, firmsStats, floodGauges, inaStations } = {}) {
   const [overlay, setOverlay] = useState(null);
   const [touring, setTouring] = useState(false);
   const [canGoBack, setCanGoBack] = useState(false);
@@ -588,14 +723,20 @@ export function useTour(mapRef, { onComplete, firmsStats } = {}) {
 
   const cancelled = useRef(false);
   const pausedRef = useRef(false);
+  const stoppingForPause = useRef(false); // true only during the synchronous map.stop() call in togglePause
   const phaseRef = useRef(0);
   const goingBackTarget = useRef(-1);
   const onCompleteRef = useRef(onComplete);
   const firmsStatsRef = useRef(firmsStats);
+  const floodGaugesRef = useRef(floodGauges ?? []);
+  const inaStationsRef = useRef(inaStations ?? []);
+  const tourPopupsRef = useRef([]);
   const runFromPhaseRef = useRef(null);
 
   useEffect(() => { onCompleteRef.current = onComplete; });
   useEffect(() => { firmsStatsRef.current = firmsStats; });
+  useEffect(() => { floodGaugesRef.current = floodGauges ?? []; }, [floodGauges]);
+  useEffect(() => { inaStationsRef.current = inaStations ?? []; }, [inaStations]);
 
   const setLitPumps = useCallback((pumps) => {
     const map = mapRef.current;
@@ -615,11 +756,9 @@ export function useTour(mapRef, { onComplete, firmsStats } = {}) {
     setCanGoBack(startPhase > 0);
     setCanGoForward(startPhase < PHASES.length - 1);
 
-    // Reset transient direct-manipulation layers so each phase starts clean
     if (map.getLayer('mapbiomas-layer'))
       map.setPaintProperty('mapbiomas-layer', 'raster-opacity', 0);
 
-    // Build animation helpers — each checks cancelled and respects pausedRef
     const go = (opts) => new Promise((resolve, reject) => {
       if (cancelled.current) { reject(new Error('cancelled')); return; }
       const start = () => {
@@ -643,26 +782,40 @@ export function useTour(mapRef, { onComplete, firmsStats } = {}) {
 
     const ease = (opts) => new Promise((resolve, reject) => {
       if (cancelled.current) { reject(new Error('cancelled')); return; }
-      const start = () => {
+
+      // Retry loop: if map.stop() fires moveend due to a pause (not natural completion),
+      // we re-run easeTo from the current position so the arc continues in the same direction.
+      function tryEase() {
+        if (cancelled.current) { reject(new Error('cancelled')); return; }
+        if (pausedRef.current) {
+          const wait = () => {
+            if (cancelled.current) { reject(new Error('cancelled')); return; }
+            if (!pausedRef.current) tryEase();
+            else setTimeout(wait, 100);
+          };
+          setTimeout(wait, 100);
+          return;
+        }
         map.easeTo(opts);
         map.once('moveend', () => {
-          if (cancelled.current) reject(new Error('cancelled'));
-          else resolve();
-        });
-      };
-      if (pausedRef.current) {
-        const wait = () => {
           if (cancelled.current) { reject(new Error('cancelled')); return; }
-          if (!pausedRef.current) start();
-          else setTimeout(wait, 100);
-        };
-        setTimeout(wait, 100);
-        return;
+          if (stoppingForPause.current) {
+            // Paused mid-arc — wait for unpause then retry the same easeTo from current pos
+            const wait = () => {
+              if (cancelled.current) { reject(new Error('cancelled')); return; }
+              if (!pausedRef.current) tryEase();
+              else setTimeout(wait, 100);
+            };
+            setTimeout(wait, 100);
+          } else {
+            resolve();
+          }
+        });
       }
-      start();
+
+      tryEase();
     });
 
-    // Poll every 100ms; frozen time when paused so the clock doesn't run down
     const pause = (ms) => new Promise((resolve, reject) => {
       if (cancelled.current) { reject(new Error('cancelled')); return; }
       let remaining = ms;
@@ -678,11 +831,15 @@ export function useTour(mapRef, { onComplete, firmsStats } = {}) {
       setTimeout(tick, 100);
     });
 
-    const ctx = { go, ease, pause, map, setOverlay, setLitPumps, firmsStatsRef };
+    const addTourPopup = (popup) => { tourPopupsRef.current.push(popup); };
+    const ctx = { go, ease, pause, map, setOverlay, setLitPumps, firmsStatsRef, floodGaugesRef, inaStationsRef, addTourPopup };
 
     let completing = true;
     try {
       for (let i = startPhase; i < PHASES.length; i++) {
+        // Close popups from the previous phase before starting the next
+        tourPopupsRef.current.forEach(p => p.remove());
+        tourPopupsRef.current = [];
         phaseRef.current = i;
         setCanGoBack(i > 0);
         setCanGoForward(i < PHASES.length - 1);
@@ -693,6 +850,8 @@ export function useTour(mapRef, { onComplete, firmsStats } = {}) {
       completing = false;
     }
 
+    tourPopupsRef.current.forEach(p => p.remove());
+    tourPopupsRef.current = [];
     setOverlay(null);
     setLitPumps([]);
 
@@ -706,10 +865,8 @@ export function useTour(mapRef, { onComplete, firmsStats } = {}) {
       setPaused(false);
       onCompleteRef.current?.();
     } else if (goBackTo >= 0) {
-      // Re-enter from the target phase (Back or Forward)
       runFromPhaseRef.current(goBackTo);
     } else {
-      // Skip / stopTour
       setTouring(false);
       setCanGoBack(false);
       setCanGoForward(false);
@@ -726,15 +883,19 @@ export function useTour(mapRef, { onComplete, firmsStats } = {}) {
     if (prev < 0) return;
     goingBackTarget.current = prev;
     cancelled.current = true;
-    mapRef.current?.stop(); // triggers moveend immediately if an animation is running
+    mapRef.current?.stop();
   }, [mapRef]);
 
   const togglePause = useCallback(() => {
     const next = !pausedRef.current;
     pausedRef.current = next;
     setPaused(next);
-    // Stop the current map animation immediately so pause feels instant
-    if (next) mapRef.current?.stop();
+    if (next) {
+      // map.stop() fires 'moveend' synchronously — flag lets ease/go detect the cause
+      stoppingForPause.current = true;
+      mapRef.current?.stop();
+      stoppingForPause.current = false;
+    }
   }, [mapRef]);
 
   const goForward = useCallback(() => {
@@ -750,6 +911,8 @@ export function useTour(mapRef, { onComplete, firmsStats } = {}) {
     cancelled.current = true;
     pausedRef.current = false;
     mapRef.current?.stop();
+    tourPopupsRef.current.forEach(p => p.remove());
+    tourPopupsRef.current = [];
     setOverlay(null);
     setTouring(false);
     setCanGoBack(false);

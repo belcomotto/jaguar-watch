@@ -20,7 +20,7 @@ export default function WelcomeModal({ onTour, onExplore }) {
           <p className={styles.subtitle}>National Park &amp; Bermejo River</p>
           <p className={styles.body}>
             The Bermejo is Argentina's last free-flowing river — and the sediment it carries feeds the entire Paraná basin.
-            The 128,000 hectares of protected dry Chaco forest on its banks are home to jaguars, giant anteaters, and dozens
+            The 128,000 hectares (equivalent to the city of Rome) of protected dry Chaco forest on its banks are home to jaguars, giant anteaters, and dozens
             of communities who have lived here for centuries. <strong>This map is a forensic record of the forces threatening both:
             the advancing agricultural frontier, intentional fires, and the illegal water pumps documented along its banks.</strong>
           </p>

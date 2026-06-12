@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import styles from './ContentView.module.css';
 
 const STATUS_COLORS = {
@@ -168,20 +168,20 @@ const LAWS = [
 ];
 
 const SUMMARY = [
-  { num: 1, code: 'Ley 26.331', name: 'Ley de Bosques', year: 2007, status: 'IN FORCE — PARTIALLY ENFORCED', color: STATUS_COLORS.orange, url: 'https://servicios.infoleg.gob.ar/infolegInternet/anexos/135000-139999/136125/norma.htm' },
-  { num: 2, code: 'Ley 26.996', name: 'Parque Nacional', year: 2014, status: 'IN FORCE', color: STATUS_COLORS.green, url: 'https://servicios.infoleg.gob.ar/infolegInternet/anexos/235000-239999/238864/norma.htm' },
-  { num: 3, code: 'Ley 25.688', name: 'Aguas', year: 2002, status: 'IN FORCE — VIOLATED', color: STATUS_COLORS.red, url: 'https://servicios.infoleg.gob.ar/infolegInternet/anexos/80000-84999/81032/norma.htm' },
-  { num: 4, code: 'Ley 25.675', name: 'Ambiente General', year: 2002, status: 'IN FORCE — SELECTIVELY APPLIED', color: STATUS_COLORS.orange, url: 'https://servicios.infoleg.gob.ar/infolegInternet/anexos/75000-79999/79980/norma.htm' },
-  { num: 5, code: 'ILO C169', name: 'Pueblos Indígenas', year: 2000, status: 'RATIFIED — VIOLATED', color: STATUS_COLORS.red, url: 'https://normlex.ilo.org/dyn/nrmlx_en/f?p=NORMLEXPUB:55:0::NO::P55_TYPE%2CP55_LANG%2CP55_DOCUMENT%2CP55_NODE:REV%2Cen%2CC169%2C%2FDocument' },
-  { num: 6, code: 'Ley 26.160', name: 'Tierras Indígenas', year: 2006, status: '⚠ TERMINATED Dec 2024', color: STATUS_COLORS.red, url: 'https://www.boletinoficial.gob.ar/detalleAviso/primera/317918/20241210' },
-  { num: 7, code: 'COIRSA', name: 'Comité Bermejo', year: 1994, status: 'ACTIVE — ENFORCEMENT GAPS', color: STATUS_COLORS.orange, url: 'http://www.coirsa.org.ar' },
-  { num: 8, code: 'Ley 24.051', name: 'Residuos Peligrosos', year: 1992, status: 'IN FORCE — POTENTIALLY VIOLATED', color: STATUS_COLORS.orange, url: 'https://servicios.infoleg.gob.ar/infolegInternet/anexos/0-4999/450/texact.htm' },
+  { num: 1, code: 'Ley 26.331', name: 'Ley de Bosques',       year: 2007, status: 'IN FORCE — PARTIALLY ENFORCED',   color: STATUS_COLORS.orange },
+  { num: 2, code: 'Ley 26.996', name: 'Parque Nacional',      year: 2014, status: 'IN FORCE',                         color: STATUS_COLORS.green  },
+  { num: 3, code: 'Ley 25.688', name: 'Aguas',                year: 2002, status: 'IN FORCE — VIOLATED',              color: STATUS_COLORS.red    },
+  { num: 4, code: 'Ley 25.675', name: 'Ambiente General',     year: 2002, status: 'IN FORCE — SELECTIVELY APPLIED',   color: STATUS_COLORS.orange },
+  { num: 5, code: 'ILO C169',   name: 'Pueblos Indígenas',    year: 2000, status: 'RATIFIED — VIOLATED',              color: STATUS_COLORS.red    },
+  { num: 6, code: 'Ley 26.160', name: 'Tierras Indígenas',    year: 2006, status: '⚠ TERMINATED Dec 2024',           color: STATUS_COLORS.red    },
+  { num: 7, code: 'COIRSA',     name: 'Comité Bermejo',       year: 1994, status: 'ACTIVE — ENFORCEMENT GAPS',        color: STATUS_COLORS.orange },
+  { num: 8, code: 'Ley 24.051', name: 'Residuos Peligrosos',  year: 1992, status: 'IN FORCE — POTENTIALLY VIOLATED',  color: STATUS_COLORS.orange },
 ];
 
-function LawCard({ law }) {
+function LawCard({ law, id }) {
   const [open, setOpen] = useState(false);
   return (
-    <article className={styles.lawCard}>
+    <article id={id} className={styles.lawCard}>
       <div className={styles.lawMeta}>
         <span className={styles.lawCode}>{law.code}</span>
         <span className={styles.lawYear}>{law.year}</span>
@@ -237,9 +237,17 @@ function LawCard({ law }) {
 }
 
 export default function LegislationView() {
+  const scrollRef = useRef(null);
+
+  function scrollToLaw(num) {
+    const el = document.getElementById(`law-${num}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   return (
     <div className={styles.view}>
-      <div className={styles.scroll}>
+      <div className={styles.scroll} ref={scrollRef}>
         <header className={styles.viewHeader}>
           <h2 className={styles.viewTitle}>Legislation</h2>
           <p className={styles.viewLead}>
@@ -247,49 +255,49 @@ export default function LegislationView() {
           </p>
         </header>
 
-        <div className={styles.lawGrid}>
-          {LAWS.map((law, i) => <LawCard key={i} law={law} />)}
-        </div>
-
-        {/* Summary table */}
-        <div style={{ marginBottom: 40 }}>
-          <h3 className={styles.sectionTitle} style={{ marginBottom: 16 }}>Legal Status Summary</h3>
+        {/* Legal Status Summary — at top, rows link to detail cards */}
+        <div style={{ marginBottom: 48 }}>
+          <h3 className={styles.sectionTitle} style={{ marginBottom: 4 }}>Legal Status Summary</h3>
+          <p style={{ fontSize: 11, color: 'var(--sand-dim)', fontStyle: 'italic', marginBottom: 14 }}>Click a row to jump to its detail.</p>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid rgba(99,65,47,0.4)' }}>
-                  {['#', 'Law / Instrument', 'Year', 'Status', 'Text'].map(h => (
+                  {['#', 'Law / Instrument', 'Year', 'Status'].map(h => (
                     <th key={h} style={{ padding: '6px 10px', textAlign: 'left', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--brown)', fontWeight: 'normal' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {SUMMARY.map(row => (
-                  <tr key={row.num} style={{ borderBottom: '1px solid rgba(222,216,207,0.06)' }}>
-                    <td style={{ padding: '8px 10px', color: 'var(--brown)', fontSize: 11 }}>{row.num}</td>
-                    <td style={{ padding: '8px 10px', color: 'var(--sand)' }}>
+                  <tr
+                    key={row.num}
+                    onClick={() => scrollToLaw(row.num)}
+                    style={{ borderBottom: '1px solid rgba(222,216,207,0.06)', cursor: 'pointer', transition: 'background 0.12s' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(222,216,207,0.04)'}
+                    onMouseLeave={e => e.currentTarget.style.background = ''}
+                  >
+                    <td style={{ padding: '9px 10px', color: 'var(--brown)', fontSize: 11 }}>{row.num}</td>
+                    <td style={{ padding: '9px 10px', color: 'var(--sand)' }}>
                       <span style={{ fontWeight: 'bold' }}>{row.code}</span>
                       <span style={{ color: 'var(--sand-dim)', marginLeft: 6 }}>{row.name}</span>
                     </td>
-                    <td style={{ padding: '8px 10px', color: 'var(--sand-dim)' }}>{row.year}</td>
-                    <td style={{ padding: '8px 10px' }}>
+                    <td style={{ padding: '9px 10px', color: 'var(--sand-dim)' }}>{row.year}</td>
+                    <td style={{ padding: '9px 10px' }}>
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
                         <span style={{ width: 7, height: 7, borderRadius: '50%', background: row.color, flexShrink: 0 }} />
                         <span style={{ color: 'var(--sand-dim)', fontSize: 11 }}>{row.status}</span>
                       </span>
-                    </td>
-                    <td style={{ padding: '8px 10px' }}>
-                      <a href={row.url} target="_blank" rel="noreferrer"
-                        style={{ color: '#7ab84e', fontSize: 11, textDecoration: 'none' }}
-                        onMouseOver={e => e.target.style.textDecoration = 'underline'}
-                        onMouseOut={e => e.target.style.textDecoration = 'none'}
-                      >↗</a>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+        </div>
+
+        <div className={styles.lawGrid}>
+          {LAWS.map((law, i) => <LawCard key={i} law={law} id={`law-${i + 1}`} />)}
         </div>
 
         {/* Legal standing */}

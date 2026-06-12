@@ -9,7 +9,7 @@ function StatusDot({ color }) {
   return <span className={styles.statusDot} style={{ background: color }} />;
 }
 
-export default function AnalyzeView({ firmsRows, firmsLoading, firmsError, firmsFetchedAt, mapbiomas, setMapbiomas }) {
+export default function AnalyzeView({ firmsRows, firmsLoading, firmsError, firmsFetchedAt, mapbiomas, setMapbiomas, inaStations, inaLoading }) {
   const counts = useMemo(() => {
     if (!firmsRows?.length) return { total: 0, high: 0, nominal: 0, low: 0 };
     const high    = firmsRows.filter(r => r.confidence === 'h' || r.confidence === 'high').length;
@@ -41,13 +41,10 @@ export default function AnalyzeView({ firmsRows, firmsLoading, firmsError, firms
             <span className={styles.cardSub}>ESA Copernicus · Sentinel-2 L2A · 10 m resolution</span>
           </div>
           <div className={styles.cardBody}>
-            <p className={styles.subLabel}>River Dynamics</p>
-            <p className={styles.desc}>The NDWI (Normalized Difference Water Index) and Moisture Index layers track seasonal flooding, water-body extent, and soil moisture along the Bermejo. Toggle these layers across months to observe how the river swells and retreats with the wet season — and how that pattern shifts over years.</p>
-            <p className={styles.subLabel} style={{ marginTop: 14 }}>Agricultural Frontier</p>
-            <p className={styles.desc}>True Color composites and Scene Classification reveal land-use change and deforestation pressure along El Impenetrable's borders. Compared year by year, these bands expose the rate at which the dry Chaco forest is being converted to soy and cattle pasture.</p>
+            <p className={styles.desc}>Planned: NDWI water index, true-color composites, and scene classification over the Bermejo corridor to track seasonal flooding and deforestation pressure along El Impenetrable's borders.</p>
             <div className={styles.statusRow}>
               <StatusDot color="#f0a500" />
-              <span className={styles.statusText}>Imagery pipeline in development · local cache available for selected months · 2015–present</span>
+              <span className={styles.statusText}>Not yet live · imagery pipeline in development</span>
             </div>
           </div>
         </div>
@@ -59,8 +56,7 @@ export default function AnalyzeView({ firmsRows, firmsLoading, firmsError, firms
             <span className={styles.cardSub}>MapBiomas Gran Chaco · Collection 5 · 30 m · 1985–2023</span>
           </div>
           <div className={styles.cardBody}>
-            <p className={styles.desc}>Annual land-use and land-cover classification for the Gran Chaco ecoregion from MapBiomas Collection 5. Each pixel is classified into one of 19 categories — native woody vegetation, grassland types, pasture, annual crops, water, and urban areas — using Landsat imagery and machine-learning algorithms trained on ground-truth data.</p>
-            <p className={styles.desc} style={{ marginTop: 10 }}>Slide through 1985–2023 to observe 38 years of deforestation, agricultural expansion, and land conversion along the Bermejo corridor. Use the play button to animate the full time series.</p>
+            <p className={styles.desc}>Annual 30 m land-cover classification using Landsat imagery, 1985–2023. Slide through the years to watch the agricultural frontier advance into dry Chaco forest — or use the play button to animate the full 38-year sequence.</p>
             <div className={styles.divider} />
             <MapBiomasPanel mapbiomas={mapbiomas} setMapbiomas={setMapbiomas} />
           </div>
@@ -70,15 +66,83 @@ export default function AnalyzeView({ firmsRows, firmsLoading, firmsError, firms
         <div className={styles.card}>
           <div className={styles.cardHead}>
             <span className={styles.cardTitle}>Flood Monitoring</span>
-            <span className={styles.cardSub}>Google Flood Hub · GloFAS · Bermejo–Paraná basin</span>
+            <span className={styles.cardSub}>Open-Meteo · Copernicus GloFAS ensemble · Bermejo–Paraguay basin</span>
           </div>
           <div className={styles.cardBody}>
-            <p className={styles.desc}>Real-time river level readings and flood alert status for 10 monitoring stations across the Bermejo, Pilcomayo, Paraguay, and Paraná rivers. When live, this layer will display current flood warning levels (Normal / Advisory / Watch / Warning) and forecast trends derived from the Global Flood Awareness System (GloFAS).</p>
-            <p className={styles.desc} style={{ marginTop: 10 }}>Data latency is approximately 6 hours. Stations are already mapped on the DISCOVER layer — status indicators will populate automatically once the API key is active.</p>
+            <p className={styles.desc}>Modelled discharge for 5 virtual gauge points on the Bermejo/Teuco, Pilcomayo, and Paraguay rivers. The headline figure is the <strong>anomaly vs the 30-day baseline</strong> — how unusual current flow is relative to its seasonal norm. That ratio is what GloFAS does reliably. Raw m³/s values and a p25–p75 ensemble spread are secondary.</p>
+            <p className={styles.desc} style={{ marginTop: 10 }}>Status levels — Near Baseline / Elevated / High / Very High — are model thresholds against that baseline, not official warnings. See <em>Data Sources</em> below for full limitations by river.</p>
             <div className={styles.statusRow}>
-              <StatusDot color="#aaa" />
-              <span className={styles.statusText}>API key pending · 10 stations mapped and ready</span>
+              <StatusDot color="#16a34a" />
+              <span className={styles.statusText}>Live · Open-Meteo Flood API · no API key required · 5 virtual gauge points active</span>
             </div>
+          </div>
+        </div>
+
+        {/* ── INA Telemetric Stations ── */}
+        <div className={styles.card}>
+          <div className={styles.cardHead}>
+            <span className={styles.cardTitle}>INA Observed Gauges</span>
+            <span className={styles.cardSub}>INA sSIyAH · Argentina National Water Institute · 3 stations</span>
+          </div>
+          <div className={styles.cardBody}>
+            <p className={styles.desc}>
+              Three telemetric stations from INA's sSIyAH network provide observed data to cross-check the GloFAS models.
+              <strong> Puerto Lavalle</strong> measures actual river level on the lower Bermejo, 121 km downstream of the park — a real reading against the model signal.
+              <strong> Pozo Sarmiento</strong>, 350 km upstream near the Bolivian border, holds the only discharge gauge on the entire Bermejo — and it is currently offline.
+              That silence is the monitoring gap: without it, no agency can say how much water is entering Argentina's Chaco.
+            </p>
+            <div className={styles.divider} />
+
+            {inaLoading && (
+              <p className={styles.statusText} style={{ fontStyle: 'italic' }}>Loading INA station data…</p>
+            )}
+
+            {!inaLoading && (() => {
+              const pl = inaStations?.find(s => s.id === 'ina-puerto-lavalle');
+              const ps = inaStations?.find(s => s.id === 'ina-pozo-sarmiento');
+              const meteo = inaStations?.find(s => s.id === 'ina-impenetrable');
+              const plOk  = pl?.status === 'ok';
+              return (
+                <>
+                  <div className={styles.statGrid} style={{ gridTemplateColumns: '1fr 1fr' }}>
+                    <div className={styles.statBox}>
+                      <span className={styles.statValue}>{plOk ? `${pl.level} m` : '—'}</span>
+                      <span className={styles.statLabel}>Bermejo at Puerto Lavalle</span>
+                    </div>
+                    <div className={styles.statBox}>
+                      <span className={styles.statValue} style={{ color: plOk && pl.anomalyPct != null ? (pl.anomalyPct >= 0 ? '#ff8800' : '#4db8ff') : undefined }}>
+                        {plOk && pl.anomalyPct != null ? `${pl.anomalyPct >= 0 ? '+' : ''}${pl.anomalyPct}%` : '—'}
+                      </span>
+                      <span className={styles.statLabel}>vs 30-day mean</span>
+                    </div>
+                  </div>
+                  <div className={styles.statusRow} style={{ marginTop: 10 }}>
+                    <StatusDot color="#4db8ff" />
+                    <span className={styles.statusText}>
+                      Puerto Lavalle · {plOk ? `${pl.level} m · ${pl.tendency}` : 'awaiting data'}
+                    </span>
+                  </div>
+                  {meteo?.status === 'ok' && (meteo.temp != null || meteo.humidity != null || meteo.wind != null) && (
+                    <div className={styles.statusRow} style={{ marginTop: 6 }}>
+                      <StatusDot color="#f0a500" />
+                      <span className={styles.statusText}>
+                        PN El Impenetrable
+                        {meteo.temp     != null ? ` · ${meteo.temp}°C` : ''}
+                        {meteo.humidity != null ? ` · ${meteo.humidity}% humidity` : ''}
+                        {meteo.wind     != null ? ` · ${meteo.wind} km/h wind` : ''}
+                      </span>
+                    </div>
+                  )}
+                  <div className={styles.statusRow} style={{ marginTop: 6 }}>
+                    <StatusDot color="#dc2626" />
+                    <span className={styles.statusText}>
+                      Pozo Sarmiento · Offline — the only discharge gauge on the Bermejo
+                      {ps?.daysSinceUpdate != null ? ` · last data ${ps.daysSinceUpdate}d ago` : ''}
+                    </span>
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </div>
 
@@ -139,8 +203,37 @@ export default function AnalyzeView({ firmsRows, firmsLoading, firmsError, firms
           </div>
         </div>
 
+        {/* ── Data Sources ── */}
+        <div className={styles.card}>
+          <div className={styles.cardHead}>
+            <span className={styles.cardTitle}>Data Sources</span>
+            <span className={styles.cardSub}>What each dataset is, how we use it, and what it cannot tell us</span>
+          </div>
+          <div className={styles.cardBody}>
+
+            <p className={styles.subLabel}>NASA FIRMS · VIIRS S-NPP + NOAA-20 + NOAA-21 · 375 m · ~3 h latency</p>
+            <p className={styles.desc}>Satellite-detected thermal anomalies from three polar-orbiting satellites, merged into a single near-real-time feed. We colour each point by algorithm confidence (High / Nominal / Low) and display the last 5 days. <em>What it cannot tell us:</em> whether an anomaly is an active fire, an agricultural burn, or a hot surface. Smoke and cloud cover can suppress detections or create gaps in coverage.</p>
+
+            <div className={styles.divider} />
+
+            <p className={styles.subLabel}>Open-Meteo / Copernicus GloFAS v4 · 0.05° grid (~5 km) · ensemble model</p>
+            <p className={styles.desc}>Modelled river discharge from the Global Flood Awareness System — no physical gauges. We use the ratio of current modelled discharge to the 30-day baseline as the primary risk signal, and display the p25–p75 ensemble spread as a measure of model uncertainty. <em>What it cannot tell us:</em> actual water levels. The <strong>Pilcomayo</strong> is braided, sediment-heavy, and partly regulated — its channel shifts seasonally and GloFAS is likely to represent it poorly. Treat its readings with extra caution (model confidence: low). This is not an authoritative warning system; consult INA or SENAMHI for operational decisions.</p>
+
+            <div className={styles.divider} />
+
+            <p className={styles.subLabel}>MapBiomas Gran Chaco · Collection 5 · Landsat 30 m · 1985–2023</p>
+            <p className={styles.desc}>Annual land-cover classification trained on Landsat imagery using machine-learning algorithms and local ground-truth data. We display it as a time-lapse overlay to track deforestation and agricultural expansion. <em>What it cannot tell us:</em> changes after 2023; features below ~1 ha (the minimum mapping unit); or the difference between degraded and structurally intact forest within a single classified pixel.</p>
+
+            <div className={styles.divider} />
+
+            <p className={styles.subLabel}>JRC Global Surface Water Explorer · Landsat 30 m · 1984–2021</p>
+            <p className={styles.desc}>Landsat-derived record of where and how long surface water was present. Two static overlays: <em>seasonality</em> (average months per year water was detected, 1984–2021) and <em>transitions</em> (gains and losses of permanent vs seasonal water between the early 1984–1999 and late 2000–2021 epochs). <em>What it cannot tell us:</em> conditions after 2021; cloud-masked periods appear as dry even when water may have been present.</p>
+
+          </div>
+        </div>
+
         <footer className={baseStyles.viewFooter}>
-          <p>Sources: NASA FIRMS (VIIRS S-NPP + NOAA-20 + NOAA-21 NRT) · Google Flood Hub / GloFAS · ESA Copernicus / Sentinel-2 L2A · JRC Global Surface Water Explorer</p>
+          <p>NASA FIRMS NRT · Copernicus GloFAS via Open-Meteo · MapBiomas Collection 5 · JRC Global Surface Water Explorer · ESA Copernicus / Sentinel-2 L2A (pipeline)</p>
         </footer>
 
       </div>

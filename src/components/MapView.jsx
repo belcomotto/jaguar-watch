@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { GAUGES, STATUS_COLORS, STATUS_LABELS, toGeoJSON } from '../data/floodGauges';
+import { STATUS_COLORS, STATUS_LABELS, GRID_MATCH_COLOR, GRID_MATCH_LABEL } from '../data/floodGauges';
+import { INA_TYPE_COLOR, INA_TYPE_LABEL } from '../data/inaGauges';
 import MapLayerPanel from './MapLayerPanel';
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
@@ -157,15 +158,49 @@ function pumpIcon(color) {
   });
 }
 
+function stationIcon(color, offline = false) {
+  return makeIcon((ctx, S) => {
+    const cx = S / 2;
+    const r  = S * 0.36;
+    // white border
+    ctx.beginPath();
+    ctx.arc(cx, cx, r + 2, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.fill();
+    // coloured fill
+    ctx.beginPath();
+    ctx.arc(cx, cx, r, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    // crosshair
+    ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+    ctx.lineWidth = 1.5;
+    ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(cx - r * 0.6, cx); ctx.lineTo(cx + r * 0.6, cx); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, cx - r * 0.6); ctx.lineTo(cx, cx + r * 0.6); ctx.stroke();
+    if (offline) {
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'square';
+      ctx.beginPath();
+      ctx.moveTo(cx + r * 0.55, cx - r * 0.55);
+      ctx.lineTo(cx - r * 0.55, cx + r * 0.55);
+      ctx.stroke();
+    }
+  });
+}
+
 const WATER_PATH_PUMPS = [
   { coords: [-62.226627, -24.136969], sourceId: 'waterpath-ingjuarez',   file: '/data/waterpath_ingjuarez.geojson',   featureIdx: 0 },
   { coords: [-61.687704, -24.367092], sourceId: 'waterpath-lagyema',     file: '/data/waterpath_lagyema.geojson',     featureIdx: 1 },
   { coords: [-61.424589, -24.619062], sourceId: 'waterpath-wichipintado', file: '/data/waterpath_wichipintado.geojson', featureIdx: 2 },
 ];
 
-export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON, mapbiomas, onIntroComplete }) {
+export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON, floodGeoJSON, floodGauges, inaGeoJSON, inaStations, mapbiomas, onIntroComplete }) {
   const containerRef = useRef(null);
   const onIntroCompleteRef = useRef(onIntroComplete);
+  const inaStationsRef = useRef([]);
+  const floodGaugesRef = useRef([]);
   const [overlays, setOverlays] = useState({ borders: false, places: false });
 
   const handleOverlayChange = (key, val) => setOverlays(prev => ({ ...prev, [key]: val }));
@@ -199,7 +234,10 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
       map.addImage('waves-advisory', wavesIcon(STATUS_COLORS.advisory), { pixelRatio: 2 });
       map.addImage('waves-normal',   wavesIcon(STATUS_COLORS.normal),   { pixelRatio: 2 });
       map.addImage('waves-pending',  wavesIcon(STATUS_COLORS.pending),  { pixelRatio: 2 });
-      map.addImage('pump-icon',      pumpIcon('#63412F'),               { pixelRatio: 2 });
+      map.addImage('pump-icon',       pumpIcon('#63412F'),                                   { pixelRatio: 2 });
+      map.addImage('station-level',  stationIcon(INA_TYPE_COLOR.river_level),              { pixelRatio: 2 });
+      map.addImage('station-meteo',  stationIcon(INA_TYPE_COLOR.meteo),                    { pixelRatio: 2 });
+      map.addImage('station-offline',stationIcon(INA_TYPE_COLOR.discharge_gauge_offline, true), { pixelRatio: 2 });
 
       // ── Mapbox Streets overlay (borders + place labels) ──────────────────
       map.addSource('mapbox-streets', {
@@ -449,27 +487,66 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
       });
       map.on('click', 'flood-icon', (e) => {
         const p = e.features[0].properties;
-        const color = STATUS_COLORS[p.status] || STATUS_COLORS.pending;
-        const label = STATUS_LABELS[p.status] || 'Awaiting live data';
-        const isPending = p.status === 'pending';
+        // Look up live gauge data from ref — GeoJSON properties may lag behind React state
+        const g = floodGaugesRef.current.find(x => x.id === p.id) ?? p;
+        const color     = STATUS_COLORS[g.status]     || STATUS_COLORS.pending;
+        const label     = STATUS_LABELS[g.status]     || 'Awaiting model data';
+        const gmColor   = GRID_MATCH_COLOR[g.gridMatch] || '#888';
+        const gmLabel   = GRID_MATCH_LABEL[g.gridMatch] || '';
+        const isPending = g.status === 'pending' || g.status === 'error' || g.noData;
+
+        // Plain-language flow sentence
+        const absPct    = g.baselinePct != null ? Math.abs(g.baselinePct) : null;
+        const dirWord   = g.baselinePct >= 0 ? 'above' : 'below';
+        const flowLine  = absPct == null ? ''
+          : absPct < 10 ? 'Flow is within its typical seasonal range'
+          : `Flow is ${absPct}% ${dirWord} its typical level for this time of year`;
+        const tendPart  = g.tendency === 'Rising'  ? ', and rising'
+          : g.tendency === 'Falling' ? ', and falling'
+          : g.tendency === 'Steady'  ? ', holding steady' : '';
+
+        // Plain-language outlook
+        const forecastRatio = g.baselineMedian > 0 ? g.forecastPeak / g.baselineMedian : 0;
+        const forecastLevel = forecastRatio >= 3 ? 'well above normal'
+          : forecastRatio >= 2 ? 'above normal'
+          : forecastRatio >= 1.5 ? 'slightly above normal'
+          : 'within normal range';
+        const alreadyPeaking = g.discharge != null && g.forecastPeak != null && g.discharge >= g.forecastPeak;
+        const outlookLine = alreadyPeaking
+          ? 'Currently at or near peak — expected to recede over the next 7 days.'
+          : g.forecastPeakDate
+            ? `Next 7 days: peak expected <strong>${g.forecastPeakDate}</strong>, ${forecastLevel}.`
+            : '';
+
+        // Technical detail
+        const pctSign   = g.baselinePct != null
+          ? (g.baselinePct >= 0 ? `+${g.baselinePct}%` : `${g.baselinePct}%`) : '';
+        const spreadText = (g.forecastSpreadLow != null && g.forecastSpreadHigh != null)
+          ? ` [${g.forecastSpreadLow}–${g.forecastSpreadHigh} ensemble]` : '';
+
         new mapboxgl.Popup({ className: 'pump-popup', closeButton: false })
           .setLngLat(e.lngLat)
-          .setHTML(`<div style="font-family:'IM Fell Double Pica',serif;padding:8px 12px;min-width:210px">
-            <p style="font-size:14px;color:#DED8CF;margin-bottom:2px"><strong>${p.river} River</strong></p>
-            <p style="font-size:12px;color:#aaa;margin-bottom:10px">${p.location}, ${p.country}</p>
-            <div style="border-top:1px solid rgba(255,255,255,0.12);padding-top:8px">
-              <p style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:${color};margin-bottom:${isPending ? 6 : 8}px">● ${label}</p>
-              ${isPending ? `
-                <p style="font-size:11px;color:#555;line-height:1.5">Live status, gauge level, tendency and forecast will populate here once the Flood Hub API is connected.</p>
-              ` : `
-                <p style="font-size:12px;color:#DED8CF">Level: ${p.level} m</p>
-                ${p.tendency    ? `<p style="font-size:11px;color:#aaa;margin-top:4px">Tendency: <strong style="color:#DED8CF">${p.tendency}</strong></p>` : ''}
-                ${p.issuedTime  ? `<p style="font-size:11px;color:#aaa;margin-top:4px">Alert issued: ${p.issuedTime}</p>` : ''}
-                ${p.forecastedPeak ? `<p style="font-size:11px;color:#aaa;margin-top:4px">Peak forecast: <strong style="color:#DED8CF">${p.forecastedPeak}</strong></p>` : ''}
-              `}
-              <p style="font-size:10px;color:#444;margin-top:8px;font-style:italic">GloFAS · Copernicus Emergency Management</p>
-              ${p.mock ? `<p style="font-size:10px;color:#555;margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.08);font-style:italic">⚠ Test gauge — mock data for demonstration purposes only</p>` : ''}
+          .setHTML(`<div style="font-family:'IM Fell Double Pica',serif;padding:10px 14px;min-width:250px">
+            <p style="font-size:15px;color:#DED8CF;margin-bottom:1px"><strong>${g.river} · ${g.location}</strong></p>
+            <p style="font-size:12px;color:#888;margin-bottom:9px">${g.country} · GloFAS model point</p>
+            <div style="border-top:1px solid rgba(255,255,255,0.12);padding-top:9px">
+              <p style="font-size:13px;letter-spacing:.07em;text-transform:uppercase;color:${color};margin-bottom:7px">● ${label}</p>
+              ${isPending
+                ? `<p style="font-size:13px;color:#777;line-height:1.5">Fetching model data…</p>`
+                : `<p style="font-size:14px;color:#DED8CF;line-height:1.55;margin-bottom:5px">${flowLine}${tendPart}.</p>
+                   ${outlookLine ? `<p style="font-size:13px;color:#aaa;line-height:1.5;margin-bottom:0">${outlookLine}</p>` : ''}`
+              }
             </div>
+            ${!isPending ? `
+            <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:8px;margin-top:10px">
+              <p style="font-size:13px;color:#aaa;margin-bottom:3px">${g.discharge} m³/s today · 7-day forecast: ${g.forecastPeak} m³/s${spreadText} · ${pctSign} vs baseline</p>
+              <p style="font-size:13px;color:${gmColor};margin-bottom:3px">${gmLabel}</p>
+              <p style="font-size:13px;color:#aaa;margin-bottom:6px">model run: ${g.modelRunDate || '—'}</p>
+              <p style="font-size:12px;color:#999;line-height:1.4;font-style:italic">Simulation, not a gauge reading — situational awareness only</p>
+            </div>` : `
+            <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:8px;margin-top:10px">
+              <p style="font-size:13px;color:${gmColor}">${gmLabel}</p>
+            </div>`}
           </div>`)
           .addTo(map);
       });
@@ -526,6 +603,107 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
       });
       map.on('mouseenter', 'firms-icon', () => { map.getCanvas().style.cursor = 'pointer'; });
       map.on('mouseleave', 'firms-icon', () => { map.getCanvas().style.cursor = ''; });
+
+      // ── INA telemetric stations ───────────────────────────────────────────
+      map.addSource('ina-stations', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] },
+      });
+      map.addLayer({
+        id: 'ina-halo',
+        type: 'circle',
+        source: 'ina-stations',
+        paint: {
+          'circle-radius': 16,
+          'circle-color': ['match', ['get', 'type'],
+            'river_level',             INA_TYPE_COLOR.river_level,
+            'meteo',                   INA_TYPE_COLOR.meteo,
+            INA_TYPE_COLOR.discharge_gauge_offline,
+          ],
+          'circle-opacity': 0.2,
+          'circle-stroke-width': 0,
+        },
+        layout: { visibility: 'none' },
+      });
+      map.addLayer({
+        id: 'ina-icon',
+        type: 'symbol',
+        source: 'ina-stations',
+        layout: {
+          'icon-image': ['match', ['get', 'type'],
+            'river_level', 'station-level',
+            'meteo',       'station-meteo',
+            'station-offline',
+          ],
+          'icon-size': 0.72,
+          'icon-allow-overlap': true,
+          'icon-ignore-placement': true,
+          visibility: 'none',
+        },
+      });
+
+      map.on('click', 'ina-icon', (e) => {
+        const p = e.features[0].properties;
+        // Use live station data from ref — GeoJSON properties may be stale if fetches
+        // completed after the last setData() call
+        const s = inaStationsRef.current.find(st => st.id === p.id) ?? p;
+
+        const color     = INA_TYPE_COLOR[s.type] || '#888';
+        const typeLabel = INA_TYPE_LABEL[s.type] || s.type;
+        const isPending = s.status === 'pending' || s.status == null;
+        const distLabel = s.distanceFromPark != null ? `${s.distanceFromPark} km from park` : '';
+
+        let body = '';
+        if (isPending) {
+          body = `<p style="font-size:13px;color:#777;font-style:italic;padding-top:8px;border-top:1px solid rgba(255,255,255,0.12);margin-top:4px">Fetching INA data…</p>`;
+        } else if (s.type === 'river_level') {
+          const anomSign = s.anomalyPct != null ? (s.anomalyPct >= 0 ? '+' : '') : '';
+          body = `<div style="border-top:1px solid rgba(255,255,255,0.12);padding-top:9px;margin-top:4px">
+            <p style="font-size:14px;color:#DED8CF;margin-bottom:5px">Level: <strong>${s.level ?? '—'} m</strong> · ${s.tendency ?? '—'}</p>
+            ${s.anomalyPct != null ? `<p style="font-size:13px;color:#aaa;margin-bottom:2px">${anomSign}${s.anomalyPct}% vs 30-day mean (baseline: ${s.baselineMean} m)</p>` : ''}
+          </div>
+          <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:8px;margin-top:9px">
+            <p style="font-size:12px;color:#888;margin-bottom:2px">Observed gauge reading — contrasts with GloFAS model for this reach</p>
+            <p style="font-size:12px;color:#888;margin-bottom:2px">Last reading: ${s.latestDate ? String(s.latestDate).slice(0,16).replace('T',' ') : '—'}</p>
+            <p style="font-size:12px;color:#666;font-style:italic">INA sSIyAH · varId 2 · ~1h latency</p>
+          </div>`;
+        } else if (s.type === 'meteo') {
+          const hasData = s.temp != null || s.wind != null || s.humidity != null;
+          body = `<div style="border-top:1px solid rgba(255,255,255,0.12);padding-top:9px;margin-top:4px">
+            ${hasData
+              ? `${s.temp     != null ? `<p style="font-size:14px;color:#DED8CF;margin-bottom:4px">Temperature: <strong>${s.temp}°C</strong></p>` : ''}
+                 ${s.humidity != null ? `<p style="font-size:14px;color:#DED8CF;margin-bottom:4px">Humidity: <strong>${s.humidity}%</strong></p>` : ''}
+                 ${s.wind     != null ? `<p style="font-size:14px;color:#DED8CF;margin-bottom:4px">Wind: <strong>${s.wind} km/h</strong></p>` : ''}`
+              : `<p style="font-size:13px;color:#777;font-style:italic">No meteorological data available from this station</p>`
+            }
+          </div>
+          <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:8px;margin-top:9px">
+            <p style="font-size:12px;color:#666;font-style:italic">INA sSIyAH · varId 53 (temp) / 58 (humidity) / 55 (wind)</p>
+          </div>`;
+        } else if (s.type === 'discharge_gauge_offline') {
+          const daysAgoText = s.daysSinceUpdate != null ? `${s.daysSinceUpdate} days ago` : 'unknown';
+          body = `<div style="border-top:1px solid rgba(255,255,255,0.12);padding-top:9px;margin-top:4px">
+            <p style="font-size:13px;color:#dc2626;margin-bottom:7px">● Offline — no recent data (${daysAgoText})</p>
+            <p style="font-size:13px;color:#aaa;line-height:1.55">The only discharge gauge on the entire Bermejo, currently silent. Without it, no one can say how much water is leaving Bolivia and entering Argentina's Chaco.</p>
+          </div>
+          <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:8px;margin-top:9px">
+            ${s.lastDate ? `<p style="font-size:12px;color:#888;margin-bottom:2px">Last data: ${String(s.lastDate).slice(0,10)}</p>` : ''}
+            <p style="font-size:12px;color:#666;font-style:italic">INA sSIyAH · varId 4 (discharge m³/s)</p>
+          </div>`;
+        }
+
+        new mapboxgl.Popup({ className: 'pump-popup', closeButton: false })
+          .setLngLat(e.lngLat)
+          .setHTML(`<div style="font-family:'IM Fell Double Pica',serif;padding:10px 14px;min-width:240px">
+            <p style="font-size:15px;color:#DED8CF;margin-bottom:1px"><strong>${s.name}</strong></p>
+            <p style="font-size:12px;color:#888;margin-bottom:5px">${typeLabel}${distLabel ? ' · ' + distLabel : ''}</p>
+            <p style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:${color};margin-bottom:0">● ${s.type === 'discharge_gauge_offline' ? 'OFFLINE' : s.status === 'ok' ? 'ACTIVE' : (String(s.status || 'PENDING')).toUpperCase()}</p>
+            ${body}
+          </div>`)
+          .addTo(map);
+      });
+      map.on('mouseenter', 'ina-icon', () => { map.getCanvas().style.cursor = 'pointer'; });
+      map.on('mouseleave', 'ina-icon', () => { map.getCanvas().style.cursor = ''; });
 
       // ── Globe intro dive ──────────────────────────────────────────────────
       // ── Tour pump highlight source + layers (start empty) ────────────────
@@ -674,6 +852,8 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
       toggle('flood-icon', layers.floodGauges);
       toggle('firms-halo', layers.firms);
       toggle('firms-icon', layers.firms);
+      toggle('ina-halo',   layers.inaStations);
+      toggle('ina-icon',   layers.inaStations);
     };
 
     if (map.isStyleLoaded()) {
@@ -683,14 +863,16 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
     }
   }, [layers]);
 
-  // Load flood gauge data when layer is enabled
+  // Push live flood gauge data into the map source
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !layers.floodGauges) return;
-    const src = map.getSource('flood-gauges');
-    if (!src) return;
-    src.setData(toGeoJSON(GAUGES));
-  }, [layers.floodGauges]);
+    if (!map || !floodGeoJSON) return;
+    const apply = () => {
+      const src = map.getSource('flood-gauges');
+      if (src) src.setData(floodGeoJSON);
+    };
+    if (map.isStyleLoaded()) apply(); else map.once('load', apply);
+  }, [floodGeoJSON, mapRef]);
 
   // Push FIRMS data into the map source whenever it loads.
   // On production the API may respond before the Mapbox style finishes loading,
@@ -762,6 +944,26 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
       }
     }
   }, [mapbiomas?.enabled, mapbiomas?.year, mapRef]);
+
+  // Push live INA station data into the map source
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !inaGeoJSON) return;
+    const apply = () => {
+      const src = map.getSource('ina-stations');
+      if (src) src.setData(inaGeoJSON);
+    };
+    if (map.isStyleLoaded()) apply(); else map.once('load', apply);
+  }, [inaGeoJSON, mapRef]);
+
+  // Keep refs in sync so click handlers always read latest fetched values
+  useEffect(() => {
+    inaStationsRef.current = inaStations ?? [];
+  }, [inaStations]);
+
+  useEffect(() => {
+    floodGaugesRef.current = floodGauges ?? [];
+  }, [floodGauges]);
 
   // Sync borders / place-label overlay visibility
   useEffect(() => {

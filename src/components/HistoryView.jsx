@@ -8,7 +8,7 @@ const SECTIONS = [
     body: `Long before the Chaco had a name on any map, the Wichí, Qom (Toba), and Moqoit peoples shaped their lives around its rhythms. The Bermejo River was not a boundary — it was the pulse of everything: food, mobility, ceremony, memory. The dry Chaco they inhabited was one of South America's largest continuous forests, a landscape of extremes that demanded deep knowledge to survive and offered extraordinary richness in return. That knowledge is still here. It never left.`,
     images: [
       { src: '/images/history/pre-colonial-1.jpeg', caption: '' },
-      { src: '/images/history/pre-colonial-2.jpg',  caption: '' },
+      { src: '/images/history/pre-colonial-2.jpg',  caption: '"Rio Vermejo — Indians Fishing." Wood engraving depicting Toba people fishing with bows while the US Navy steamship Water Witch is moored in the background during the 1854 expedition. Published in: Page, Thomas Jefferson. La Plata, the Argentine Confederation, and Paraguay. New York: Harper & Brothers, 1859, p. 249.' },
     ],
   },
   {
@@ -16,9 +16,9 @@ const SECTIONS = [
     title: 'The Land Is Given Away',
     body: `The origins of La Fidelidad date to 1872, when the estate was handed by the Saltean government — at the time there was no province of Chaco — to Natalio Roldán, a Buenos Aires merchant, in recognition of his role navigating and exploring the Teuco River. It was a reward for conquest dressed up as discovery. The land was not empty. It was never empty.\n\nChaco was among the last Argentine provinces to be formally constituted, partly because of the persistent presence of its Indigenous inhabitants. As the state began pushing for productive settlement, it started granting land to settlers from neighboring provinces. The region became populated by Wichí, Qom, and criollos — along with waves of migrants that local community liaisons working in the area describe vividly: Germans, Ukrainians, Czechs, arriving in successive waves, settling mostly around Castelli — the gateway town to El Impenetrable, and the largest population center in that part of Chaco.`,
     images: [
-      { src: '/images/history/1872-1.jpg', caption: '' },
-      { src: '/images/history/1872-2.jpg', caption: '' },
-      { src: '/images/history/1872-3.jpg', caption: '' },
+      { src: '/images/history/1872-1.jpg', caption: 'Plano del Río Bermejo desde sus cabezeras hasta su desagüe en el del Paraguay, navegado y reconocido en 1826 por Pablo Soria. Buenos Aires, 10 October 1831. Archivo General de la Nación (AGN), División Cartografía, II-230.' },
+      { src: '/images/history/1872-2.jpg', caption: 'Plano del Río Bermejo por Nicolás Descalzi. Lithograph. Buenos Aires, 15 December 1831 (expedition conducted 1826). Includes vignettes of Toba ceremonies, indigenous fishing, and an inset of the Salto de Yzó. Archivo General de la Nación (AGN), División Cartografía, II-228.' },
+      { src: '/images/history/1872-3.jpg', caption: '"Expedicionarios del Chaco." Colección Witcomb, No. 602. c. 1890s–1900s. Photograph by Alexander Spiers Witcomb. Archivo General de la Nación (AGN), Departamento de Documentos Fotográficos, Buenos Aires.' },
     ],
   },
   {
@@ -26,12 +26,12 @@ const SECTIONS = [
     title: 'Bunge & Born and the Extraction Economy',
     body: `The estate passed to Jorge Born of the agro-industrial giant Bunge & Born, who ran it as a private *estancia*: cattle, timber, cotton, corrals, infrastructure pushed into the monte. When it stopped being profitable, they traded it to Italian brothers from the textile industry — Luis and Manuel Roseo — who acquired it in the early 1970s. Under the Roseos, the land became something between a private fiefdom and a forgotten territory. Local criollos and originarios recall going to hunt — guazuncho, tapir, quirquincho, to fish the Bermejo — with a quiet understanding that the land belonged to nobody in particular. *Tierra de nadie*, as those who have worked closely with these communities describe it.`,
     images: [
-      { src: '/images/history/early-20th-1.jpg', caption: '' },
-      { src: '/images/history/early-20th-2.jpg', caption: '' },
-      { src: '/images/history/early-20th-3.jpg', caption: '' },
-      { src: '/images/history/early-20th-4.jpg', caption: '' },
-      { src: '/images/history/early-20th-5.jpg', caption: '' },
-      { src: '/images/history/early-20th-6.jpg', caption: '' },
+      { src: '/images/history/early-20th-1.jpg', caption: 'Quebracho obraje — oxen, logs, and camp sheds, Gran Chaco. c. 1900–1930. Archive no. 129468. The image documents the extractive tannin and timber industry that drove large-scale deforestation across the Chaco. Repository unconfirmed; likely Archivo General de la Nación (AGN), Departamento de Documentos Fotográficos.' },
+      { src: '/images/history/early-20th-2.jpg', caption: 'Quebracho obraje — field of felled logs, Gran Chaco. c. 1900–1930. Archive no. 150387. An estimated 150 million quebracho trees were felled during this period by companies such as La Forestal, using indigenous and migrant labour under harsh conditions. Repository unconfirmed; likely Archivo General de la Nación (AGN).' },
+      { src: '/images/history/early-20th-3.jpg', caption: 'Small steam launch navigating a narrow, densely vegetated Chaco river channel. c. 1890s–1910s. Photograph. Possible vessel: vapor Bolivia, employed in Argentine Chaco and Pilcomayo river exploration from the 1890s onward. Source and repository unconfirmed.' },
+      { src: '/images/history/early-20th-4.jpg', caption: 'Official seal of the Compañía de Navegación a Vapor del Río Bermejo. c. 1869–1880. The company was founded by Natalio Roldán and Francisco G. Molina, incorporated under Ley Nacional No. 354 (1869), to open the Río Bermejo to commercial navigation and colonize the Gran Chaco. Source: Historia de la navegación del río Bermejo, Yumpu doc. 63329720.' },
+      { src: '/images/history/early-20th-5.jpg', caption: 'River steamer on the Bermejo, early 20th century. Photograph of a multi-deck shallow-draft river steamer characteristic of the Compañía Oficial de Navegación del Río Bermejo. Source: Historia de la navegación del río Bermejo, Yumpu doc. 63329720. Original archival source unconfirmed.' },
+      { src: '/images/history/early-20th-6.jpg', caption: 'El vapor "114 B.", descargando mercaderías en puerto Presidente Roca, sobre el Bermejo navegable. c. 1910s–1930s. Photograph of a flat-bottomed Bermejo steamer unloading cargo at Presidencia Roca, Chaco Province. Source: Historia de la navegación del río Bermejo, Yumpu doc. 63329720. Original publication unconfirmed.' },
     ],
   },
   {
@@ -102,6 +102,10 @@ function renderText(text) {
 
 export default function HistoryView() {
   const [lightbox, setLightbox] = useState(null); // { src, caption } or null
+  const [zoomed, setZoomed] = useState(false);
+
+  // Reset zoom when opening a new image
+  useEffect(() => { setZoomed(false); }, [lightbox]);
 
   useEffect(() => {
     if (!lightbox) return;
@@ -160,14 +164,24 @@ export default function HistoryView() {
       {lightbox && (
         <div className={styles.lightbox} onClick={() => setLightbox(null)}>
           <button className={styles.lightboxClose} onClick={() => setLightbox(null)}>✕</button>
-          <div className={styles.lightboxInner} onClick={(e) => e.stopPropagation()}>
-            {lightbox.caption && (
+          <div
+            className={styles.lightboxInner}
+            style={zoomed ? { overflow: 'auto', maxWidth: '90vw', maxHeight: '90vh' } : undefined}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {lightbox.caption && !zoomed && (
               <p className={styles.lightboxCaption}>{lightbox.caption}</p>
             )}
             <img
               src={lightbox.src}
               alt="Expanded view"
               className={styles.lightboxImg}
+              style={{
+                maxWidth:  zoomed ? 'none' : undefined,
+                maxHeight: zoomed ? 'none' : undefined,
+                cursor: zoomed ? 'zoom-out' : 'zoom-in',
+              }}
+              onClick={() => setZoomed(z => !z)}
             />
           </div>
         </div>

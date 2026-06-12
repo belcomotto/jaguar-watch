@@ -98,8 +98,6 @@
   border: none;
   cursor: pointer;
   padding: 0;
-  padding-left: 6px;
-  border-left: 1px solid var(--panel-border);
   transition: color 0.15s;
   white-space: nowrap;
 }
@@ -246,10 +244,10 @@
 /* ── Image caption ───────────────────────────────────────────────────────── */
 .caption {
   font-family: 'IM Fell Double Pica', serif;
-  font-size: 10px;
+  font-size: 13px;
   font-style: italic;
-  color: var(--sand-dim);
-  margin: 4px 0 0;
+  color: var(--sand);
+  margin: 6px 0 0;
   text-align: center;
-  line-height: 1.4;
+  line-height: 1.5;
 }

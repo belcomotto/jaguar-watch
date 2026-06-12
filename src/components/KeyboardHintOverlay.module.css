@@ -1,0 +1,67 @@
+.hint {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  opacity: 1;
+  transition: opacity 1.4s ease;
+  pointer-events: none;
+}
+
+.fading {
+  opacity: 0;
+}
+
+.keys {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 30px;
+  border: 1.5px solid rgba(222, 216, 207, 0.55);
+  border-bottom: 3px solid rgba(222, 216, 207, 0.55);
+  border-radius: 5px;
+  font-size: 14px;
+  color: rgba(222, 216, 207, 0.85);
+  background: rgba(6, 10, 18, 0.45);
+  font-family: system-ui, sans-serif;
+  line-height: 1;
+}
+
+.keySpace {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100px;
+  height: 30px;
+  border: 1.5px solid rgba(222, 216, 207, 0.55);
+  border-bottom: 3px solid rgba(222, 216, 207, 0.55);
+  border-radius: 5px;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(222, 216, 207, 0.85);
+  background: rgba(6, 10, 18, 0.45);
+  font-family: 'Icone Pro', 'IM Fell Double Pica', serif;
+}
+
+.label {
+  font-family: 'IM Fell Double Pica', serif;
+  font-size: 12px;
+  font-style: italic;
+  color: rgba(222, 216, 207, 0.75);
+  text-align: center;
+  margin: 0;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
+}
