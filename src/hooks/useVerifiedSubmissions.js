@@ -8,16 +8,11 @@ export function useVerifiedSubmissions(enabled) {
     if (!enabled) { setSubmissions([]); return; }
 
     supabase.from('submissions').select('*').eq('status', 'verified')
-      .then(({ data, error }) => {
-        console.log('[community] fetch count:', data?.length, '| error:', error?.message ?? null);
-        if (data) setSubmissions(data);
-      });
+      .then(({ data }) => { if (data) setSubmissions(data); });
 
     const channel = supabase.channel('community-layer')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'submissions' },
-        (payload) => {
-          console.log('[community] realtime event:', payload.eventType, payload.new);
-          const { eventType, new: row, old: oldRow } = payload;
+        ({ eventType, new: row, old: oldRow }) => {
           if (eventType === 'DELETE') {
             setSubmissions(prev => prev.filter(s => s.id !== oldRow.id));
             return;
@@ -31,7 +26,7 @@ export function useVerifiedSubmissions(enabled) {
             setSubmissions(prev => prev.filter(s => s.id !== row.id));
           }
         })
-      .subscribe(status => console.log('[community] channel status:', status));
+      .subscribe();
 
     return () => { supabase.removeChannel(channel); };
   }, [enabled]);

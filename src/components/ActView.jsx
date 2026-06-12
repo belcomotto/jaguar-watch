@@ -80,8 +80,7 @@ export default function ActView({ actPin, onClearPin }) {
 
     setSubmit(false);
     if (error) {
-      console.error('Supabase RPC error:', error);
-      setErr(`Submission failed: ${error.message || error.code || JSON.stringify(error)}`);
+      setErr('Submission failed. Please try again.');
     } else {
       setDone(true);
       onClearPin();
