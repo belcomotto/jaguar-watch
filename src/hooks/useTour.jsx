@@ -402,7 +402,7 @@ async function phaseMapbiomas({ go, pause, map, setOverlay }) {
       { color: '#db4fba', label: 'Cropland' },
       { color: '#ffd700', label: 'Pasture' },
     ],
-    body: 'The agricultural frontier, closing in from every side (seen in pink and yellow) — and as it advances, the Gran Chaco fractures into ever-smaller fragments. El Impenetrable is left as the last oasis of dry forest still whole enough to shelter its wildlife - it has become the final refuge in a landscape being pulled apart.',
+    bodyHtml: '<strong>The agricultural frontier, closing in from every side (seen in pink and yellow)</strong> — and as it advances, the Gran Chaco fractures into ever-smaller fragments. El Impenetrable is left as the last oasis of dry forest still whole enough to shelter its wildlife - it has become the final refuge in a landscape being pulled apart.',
   });
 
   await pause(2500);
@@ -669,7 +669,7 @@ async function phaseInaGauges({ go, pause, map, setOverlay, inaStationsRef, addT
     id: 'ina-gauges',
     title: 'The Monitoring Gap',
     subtitle: 'INA sSIyAH · Telemetric (In Territory)',
-    body: 'Six telemetric (in territory) stations cover the Bermejo corridor. Three gauge river level across the upper reaches — Aguas Blancas at the Bolivian border, Embarcación, and Puerto Velaz. Puerto Lavalle, 121 km downstream of the park, provides the ground-truth reading that cross-checks the satellite models. Inside the park, a meteorological station watches conditions. And Pozo Sarmiento holds the only discharge gauge on the whole Bermejo — currently silent. That silence is the monitoring gap.',
+    body: 'Six telemetric (in territory) stations cover the Bermejo corridor. Three gauge river level across the upper reaches — Aguas Blancas at the Bolivian border, Embarcación, and Puerto Velaz. Puerto Lavalle, 121 km downstream of the park, provides the ground-truth reading that cross-checks the satellite models. Inside the park, a meteorological station watches conditions. And Pozo Sarmiento holds the only discharge gauge on the whole Bermejo — last confirmed signal: June 2025, silent ever since. That silence is the monitoring gap.',
   });
 
   // Fade in an individual popup at each station

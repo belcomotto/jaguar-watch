@@ -39,7 +39,7 @@ function sortedDesc(rows) {
 async function fetchRiverLevel(s) {
   try {
     const [raw7, rawBaseline] = await Promise.all([
-      fetchWithTimeout(inaRelUrl(s.siteCode, s.varIdLevel, 7))
+      fetchWithTimeout(inaAbsUrl(s.siteCode, s.varIdLevel, daysAgo(7), today()))
         .then(r => r.ok ? r.json() : null).catch(() => null),
       fetchWithTimeout(inaAbsUrl(s.siteCode, s.varIdDaily, daysAgo(30), today()))
         .then(r => r.ok ? r.json() : null).catch(() => null),
@@ -99,17 +99,28 @@ async function fetchMeteo(s) {
 
 async function fetchDischargeOffline(s) {
   try {
-    const raw  = await fetchWithTimeout(inaAbsUrl(s.siteCode, s.varIdDischarge, daysAgo(30), today()))
+    // Search 2 years back — discharge data is sparse or absent on this gauge
+    const rawDischarge = await fetchWithTimeout(inaAbsUrl(s.siteCode, s.varIdDischarge, daysAgo(730), today()))
       .then(r => r.ok ? r.json() : null).catch(() => null);
-    const rows = sortedDesc(parseRows(raw));
-    const latest = rows[0];
+    const dischargeRows = sortedDesc(parseRows(rawDischarge));
+    const latestDischarge = dischargeRows[0];
 
-    const lastDate        = latest?.timestart || latest?.fecha || null;
+    let lastDate = latestDischarge?.timestart || latestDischarge?.fecha || null;
+    const discharge = latestDischarge ? Math.round(parseFloat(latestDischarge.valor) * 10) / 10 : null;
+
+    // When discharge is absent, fall back to level series for last-active evidence
+    if (!lastDate && s.varIdLevel) {
+      const rawLevel = await fetchWithTimeout(inaAbsUrl(s.siteCode, s.varIdLevel, daysAgo(730), today()))
+        .then(r => r.ok ? r.json() : null).catch(() => null);
+      const levelRows = sortedDesc(parseRows(rawLevel));
+      const latestLevel = levelRows[0];
+      lastDate = latestLevel?.timestart || latestLevel?.fecha || null;
+    }
+
     const daysSinceUpdate = lastDate
       ? Math.floor((Date.now() - new Date(lastDate)) / 86400000)
       : null;
-    const isStale    = !lastDate || daysSinceUpdate > 14;
-    const discharge  = latest ? Math.round(parseFloat(latest.valor) * 10) / 10 : null;
+    const isStale = !lastDate || daysSinceUpdate > 14;
 
     return { ...s, status: isStale ? 'offline' : 'ok', discharge, lastDate, daysSinceUpdate, isStale };
   } catch {

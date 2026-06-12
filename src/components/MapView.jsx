@@ -681,13 +681,17 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
             <p style="font-size:12px;color:#666;font-style:italic">INA sSIyAH · varId 53 (temp) / 58 (humidity) / 55 (wind)</p>
           </div>`;
         } else if (s.type === 'discharge_gauge_offline') {
-          const daysAgoText = s.daysSinceUpdate != null ? `${s.daysSinceUpdate} days ago` : 'unknown';
+          const lastDateStr = s.lastDate ? String(s.lastDate).slice(0, 10) : null;
+          const daysAgoText = s.daysSinceUpdate != null ? `${s.daysSinceUpdate} days` : null;
           body = `<div style="border-top:1px solid rgba(255,255,255,0.12);padding-top:9px;margin-top:4px">
-            <p style="font-size:13px;color:#dc2626;margin-bottom:7px">● Offline — no recent data (${daysAgoText})</p>
-            <p style="font-size:13px;color:#aaa;line-height:1.55">The only discharge gauge on the entire Bermejo, currently silent. Without it, no one can say how much water is leaving Bolivia and entering Argentina's Chaco.</p>
+            <p style="font-size:13px;color:#dc2626;margin-bottom:7px">● Offline — discharge monitoring silent</p>
+            <p style="font-size:13px;color:#aaa;line-height:1.55">The only discharge gauge on the entire Bermejo. Without it, no one can say how much water is leaving Bolivia and entering Argentina's Chaco.</p>
           </div>
           <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:8px;margin-top:9px">
-            ${s.lastDate ? `<p style="font-size:12px;color:#888;margin-bottom:2px">Last data: ${String(s.lastDate).slice(0,10)}</p>` : ''}
+            ${lastDateStr
+              ? `<p style="font-size:13px;color:#ef4444;font-weight:bold;margin-bottom:4px">Last confirmed signal: ${lastDateStr}${daysAgoText ? ` (${daysAgoText} ago)` : ''}</p>`
+              : `<p style="font-size:12px;color:#888;margin-bottom:4px">Last signal: unknown</p>`
+            }
             <p style="font-size:12px;color:#666;font-style:italic">INA sSIyAH · varId 4 (discharge m³/s)</p>
           </div>`;
         }
