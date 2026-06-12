@@ -80,7 +80,8 @@ export default function ActView({ actPin, onClearPin }) {
 
     setSubmit(false);
     if (error) {
-      setErr('Submission failed. Please try again.');
+      console.error('Supabase RPC error:', error);
+      setErr(`Submission failed: ${error.message || error.code || JSON.stringify(error)}`);
     } else {
       setDone(true);
       onClearPin();
@@ -174,12 +175,12 @@ export default function ActView({ actPin, onClearPin }) {
           </div>
 
           <div className={styles.field}>
-            <label className={styles.label}>Evidence detail <span className={styles.required}>*</span></label>
+            <label className={styles.label}>Upload Evidence <span className={styles.required}>*</span></label>
             <textarea
               value={form.evidence_detail}
               onChange={set('evidence_detail')}
               className={`${styles.textarea} ${errors.evidence_detail ? styles.inputError : ''}`}
-              placeholder="Describe or link your evidence — photo URL, document reference, firsthand account..."
+              placeholder="Describe or link your evidence — photo URL, document reference, firsthand account... Make sure your evidence is freely accessible."
               style={{ minHeight: 52 }}
             />
           </div>
