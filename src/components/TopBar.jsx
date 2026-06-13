@@ -1,7 +1,7 @@
 import styles from './TopBar.module.css';
 
 const NAV = [
-  { id: 'Discover',    label: 'Discover' },
+  { id: 'Discover',    label: 'Explore' },
   { id: 'History',     label: 'History' },
   { id: 'Legislation', label: 'Legislation' },
   { id: 'Analyze',     label: 'Analyze' },
