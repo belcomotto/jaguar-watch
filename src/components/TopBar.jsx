@@ -11,7 +11,7 @@ const NAV = [
 export default function TopBar({ activeTab, setActiveTab }) {
   return (
     <header className={styles.topBar}>
-      <h1 className={styles.title}>Jaguar Watch</h1>
+      <h1 className={styles.title}>Jaguar Rivers Watch</h1>
       <nav className={styles.nav}>
         {NAV.map(({ id, label }) => (
           <button

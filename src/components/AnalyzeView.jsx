@@ -94,12 +94,15 @@ export default function AnalyzeView({ firmsRows, firmsLoading, firmsError, firms
               <span className={styles.cardTitle}>INA Observed Gauges</span>
               <a href="https://alerta.ina.gob.ar/pub/mapa" target="_blank" rel="noreferrer" className={styles.cardLink}>↗ Open INA Alert Map</a>
             </div>
-            <span className={styles.cardSub}>INA sSIyAH · Argentina National Water Institute · 3 stations</span>
+            <span className={styles.cardSub}>INA sSIyAH · Argentina National Water Institute · 4 river-level stations</span>
           </div>
           <div className={styles.cardBody}>
             <p className={styles.desc}>
-              Six telemetric stations from INA's sSIyAH network provide observed data to cross-check the GloFAS models.
-              <strong> Puerto Lavalle</strong> measures actual river level on the lower Bermejo, 121 km downstream of the park.
+              Four telemetric stations from INA's sSIyAH network measure actual river level along the Bermejo corridor:
+              <strong> Aguas Blancas</strong> (upper reaches, Bolivia border),
+              <strong> Embarcación</strong> (mid-river confluence zone),
+              <strong> Puerto Velaz</strong>, and
+              <strong> Puerto Lavalle</strong> (lower Bermejo, 121 km downstream of the park).
               <strong> El Colorado</strong> holds the only discharge data ever published for the Bermejo — 454 readings over 79 days (July–September 2024), then permanent silence.
               That 79-day record is the only time anyone measured how much water this river actually carries.
             </p>
@@ -110,30 +113,38 @@ export default function AnalyzeView({ firmsRows, firmsLoading, firmsError, firms
             )}
 
             {!inaLoading && (() => {
-              const pl = inaStations?.find(s => s.id === 'ina-puerto-lavalle');
+              const riverStations = (inaStations ?? []).filter(s => s.type === 'river_level');
+              const activeStations = riverStations.filter(s => s.status === 'ok');
               const ec = inaStations?.find(s => s.id === 'ina-el-colorado');
               const meteo = inaStations?.find(s => s.id === 'ina-impenetrable');
-              const plOk  = pl?.status === 'ok';
               return (
                 <>
-                  <div className={styles.statGrid} style={{ gridTemplateColumns: '1fr 1fr' }}>
-                    <div className={styles.statBox}>
-                      <span className={styles.statValue}>{plOk ? `${pl.level} m` : '—'}</span>
-                      <span className={styles.statLabel}>Bermejo at Puerto Lavalle</span>
+                  {activeStations.map((s, i) => (
+                    <div key={s.id}>
+                      {i > 0 && <div className={styles.divider} />}
+                      <div className={styles.statGrid} style={{ gridTemplateColumns: '1fr 1fr' }}>
+                        <div className={styles.statBox}>
+                          <span className={styles.statValue}>{`${s.level} m`}</span>
+                          <span className={styles.statLabel}>Bermejo at {s.name}</span>
+                        </div>
+                        <div className={styles.statBox}>
+                          <span className={styles.statValue} style={{ color: s.anomalyPct != null ? (s.anomalyPct >= 0 ? '#ff8800' : '#4db8ff') : undefined }}>
+                            {s.anomalyPct != null ? `${s.anomalyPct >= 0 ? '+' : ''}${s.anomalyPct}%` : '—'}
+                          </span>
+                          <span className={styles.statLabel}>vs 30-day mean</span>
+                        </div>
+                      </div>
+                      <div className={styles.statusRow} style={{ marginTop: 10 }}>
+                        <StatusDot color="#4db8ff" />
+                        <span className={styles.statusText}>
+                          {s.name} · {s.level} m · {s.tendency}
+                        </span>
+                      </div>
                     </div>
-                    <div className={styles.statBox}>
-                      <span className={styles.statValue} style={{ color: plOk && pl.anomalyPct != null ? (pl.anomalyPct >= 0 ? '#ff8800' : '#4db8ff') : undefined }}>
-                        {plOk && pl.anomalyPct != null ? `${pl.anomalyPct >= 0 ? '+' : ''}${pl.anomalyPct}%` : '—'}
-                      </span>
-                      <span className={styles.statLabel}>vs 30-day mean</span>
-                    </div>
-                  </div>
-                  <div className={styles.statusRow} style={{ marginTop: 10 }}>
-                    <StatusDot color="#4db8ff" />
-                    <span className={styles.statusText}>
-                      Puerto Lavalle · {plOk ? `${pl.level} m · ${pl.tendency}` : 'awaiting data'}
-                    </span>
-                  </div>
+                  ))}
+                  {activeStations.length === 0 && (
+                    <p className={styles.statusText} style={{ fontStyle: 'italic' }}>No active river-level stations</p>
+                  )}
                   {meteo?.status === 'ok' && (meteo.temp != null || meteo.humidity != null || meteo.wind != null) && (
                     <div className={styles.statusRow} style={{ marginTop: 6 }}>
                       <StatusDot color="#f0a500" />
