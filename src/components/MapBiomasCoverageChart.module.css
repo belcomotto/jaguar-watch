@@ -4,7 +4,7 @@
 
 .hint {
   font-size: 10px;
-  color: var(--sand-dim);
+  color: rgba(20, 20, 20, 0.45);
   font-style: italic;
   margin-bottom: 8px;
   letter-spacing: 0.03em;
@@ -24,7 +24,7 @@
 .tooltipYear {
   font-family: 'Icone Pro', 'IM Fell Double Pica', serif;
   font-size: 13px;
-  color: var(--sand);
+  color: #ded8cf;
   margin-bottom: 8px;
   letter-spacing: 0.06em;
 }
@@ -45,13 +45,13 @@
 
 .tooltipLabel {
   font-size: 11px;
-  color: var(--sand-dim);
+  color: rgba(222, 216, 207, 0.7);
   flex: 1;
 }
 
 .tooltipVal {
   font-size: 11px;
-  color: var(--sand);
+  color: #ded8cf;
   font-family: 'Icone Pro', 'IM Fell Double Pica', serif;
   white-space: nowrap;
 }
@@ -81,6 +81,6 @@
 
 .legendLabel {
   font-size: 10px;
-  color: var(--sand-dim);
+  color: #2a2a2a;
   letter-spacing: 0.03em;
 }
