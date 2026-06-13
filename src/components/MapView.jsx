@@ -1164,18 +1164,27 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
     }
   }, [communityGeoJSON, mapRef]);
 
-  // Open / close the featured community popup (e.g. example entry on ACT tab)
+  // Open / close the example community popup when the ACT tab is active
   useEffect(() => {
     const map = mapRef.current;
     featuredPopupRef.current?.remove();
     featuredPopupRef.current = null;
     if (!highlightCommunityId || !map) return;
-    const feature = communityGeoJSON?.features?.find(f => f.properties.id === highlightCommunityId);
-    if (!feature) return;
-    const [lng, lat] = feature.geometry.coordinates;
+
+    const LNG = -61.12394, LAT = -25.04209;
+    const dummyProps = {
+      title: 'EXAMPLE EVENT',
+      type_of_event: 'other',
+      date_of_event: '2026-06-12',
+      evidence_type: 'photo_video',
+      confidence: 'witnessed',
+      description: 'This is how community sourced information looks in the Map. Fill in the required information through the form in the ACT panel to provide your evidence to the general public.',
+      evidence_detail: 'https://share.google/mg8FTWc4qG7CFPMjd',
+      notes: null,
+    };
+
     const open = () => {
-      // Fly to the feature so the popup lands in view
-      map.flyTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), 10), duration: 1400,
+      map.flyTo({ center: [LNG, LAT], zoom: Math.max(map.getZoom(), 10), duration: 1400,
         easing: t => 1 - Math.pow(1 - t, 3) });
       featuredPopupRef.current = new mapboxgl.Popup({
         className: 'community-popup',
@@ -1184,12 +1193,13 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
         maxWidth: '480px',
         offset: 14,
       })
-        .setLngLat([lng, lat])
-        .setHTML(buildCommunityPopupHTML(feature.properties))
+        .setLngLat([LNG, LAT])
+        .setHTML(buildCommunityPopupHTML(dummyProps))
         .addTo(map);
     };
+
     if (map.isStyleLoaded()) open(); else map.once('load', open);
-  }, [highlightCommunityId, communityGeoJSON, mapRef]);
+  }, [highlightCommunityId, mapRef]);
 
   // Sync borders / place-label overlay visibility
   useEffect(() => {
