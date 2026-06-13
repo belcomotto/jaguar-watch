@@ -637,7 +637,7 @@ async function phaseGauges({ go, pause, map, setOverlay, setLitPumps, floodGauge
     addTourPopup(popup);
   });
 
-  await pause(7000);
+  await pause(10000);
 }
 
 async function phaseInaGauges({ go, pause, map, setOverlay, inaStationsRef, addTourPopup }) {
@@ -670,7 +670,7 @@ async function phaseInaGauges({ go, pause, map, setOverlay, inaStationsRef, addT
     id: 'ina-gauges',
     title: 'The Monitoring Gap',
     subtitle: 'INA sSIyAH · Telemetric (In Territory)',
-    bodyHtml: 'Six <strong>telemetric (in territory) stations</strong> cover the Bermejo corridor. Three gauge river level across the upper reaches — Aguas Blancas at the Bolivian border, Embarcación, and Puerto Velaz. Puerto Lavalle, 121 km downstream of the park, provides the ground-truth reading that cross-checks the satellite models. Inside the park, a meteorological station watches conditions. El Colorado holds the only discharge data ever published for the entire Bermejo — 454 readings over 79 days (July – September 2024), then permanent silence. That 79-day record is the only time anyone measured how much water this river actually carries.',
+    bodyHtml: 'Six <strong>telemetric (in territory) stations</strong> cover the Bermejo corridor. Four river level gauges across the upper reaches and downstream of the park, provide the ground-truth reading that cross-checks the satellite models. Inside the park, a meteorological station watches conditions. El Colorado station holds the only discharge data ever published for the entire Bermejo (July – September 2024), then permanent silence. That 79-day record is the only time anyone measured how much water this river actually carries.',
   });
 
   // Fade in an individual popup at each station
@@ -682,7 +682,7 @@ async function phaseInaGauges({ go, pause, map, setOverlay, inaStationsRef, addT
     addTourPopup(popup);
   });
 
-  await pause(9000);
+  await pause(11000);
 }
 
 async function phaseFires({ pause, map, setOverlay, firmsStatsRef }) {
@@ -719,7 +719,7 @@ async function phaseCommunity({ go, pause, map, setOverlay }) {
     id: 'community',
     title: 'Act · Actuar',
     subtitle: 'Community Monitoring',
-    body: 'This map is built to be nurtured by the communities who know this territory. Through the Act panel, anyone can run their own investigation — on the ground or digitally — and contribute evidence directly to this map. Every observation, photograph, and testimony strengthens the collective record of what is happening to the land, the water, and the people who depend on them.',
+    bodyHtml: '<strong>This map is built to be nurtured by the communities who know this territory.</strong> Through the Act panel, anyone can run their own investigation — on the ground or digitally — and contribute evidence directly to this map. Every observation, photograph, and testimony strengthens the collective record of what is happening to the land, the water, and the people who depend on them.',
   });
 
   await pause(9000);
