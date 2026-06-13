@@ -1174,11 +1174,15 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
     if (!feature) return;
     const [lng, lat] = feature.geometry.coordinates;
     const open = () => {
+      // Fly to the feature so the popup lands in view
+      map.flyTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), 10), duration: 1400,
+        easing: t => 1 - Math.pow(1 - t, 3) });
       featuredPopupRef.current = new mapboxgl.Popup({
         className: 'community-popup',
         closeButton: true,
         closeOnClick: false,
         maxWidth: '480px',
+        offset: 14,
       })
         .setLngLat([lng, lat])
         .setHTML(buildCommunityPopupHTML(feature.properties))
