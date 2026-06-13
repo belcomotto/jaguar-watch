@@ -132,11 +132,29 @@
 }
 
 .locationBox {
+  position: relative;
   padding: 10px 12px;
+  padding-right: 34px;
   border: 1px solid var(--panel-border);
   border-radius: 3px;
   background: rgba(0,0,0,0.06);
   transition: border-color 0.15s;
+}
+
+.locationClearBtn {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  font-size: 15px;
+  color: rgba(20,20,20,0.38);
+  line-height: 1;
+  padding: 2px 4px;
+  transition: color 0.15s;
+}
+
+.locationClearBtn:hover {
+  color: #c0392b;
 }
 
 .locationBoxError {

@@ -11,3 +11,24 @@
 .pump-popup .mapboxgl-popup-tip {
   border-top-color: rgba(99, 65, 47, 0.4);
 }
+
+/* Light-theme popup for community submissions — matches panel palette */
+.community-popup .mapboxgl-popup-content {
+  background: #faf9f7;
+  border: 1px solid rgba(99, 65, 47, 0.22);
+  border-radius: 4px;
+  padding: 0;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.13);
+  color: #1a1a1a;
+}
+
+.community-popup .mapboxgl-popup-tip {
+  border-top-color: rgba(99, 65, 47, 0.22);
+}
+
+.community-popup .mapboxgl-popup-close-button {
+  color: rgba(20,20,20,0.4);
+  font-size: 18px;
+  padding: 6px 10px;
+  line-height: 1;
+}

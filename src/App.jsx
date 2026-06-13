@@ -78,6 +78,12 @@ export default function App() {
   // Pin is only active while on the Act tab — derive rather than sync
   const effectiveActPin = activeTab === 'Act' ? actPin : null;
 
+  // Wrap tab selection so switching to Act auto-enables the community layer
+  const handleSetActiveTab = useCallback((tab) => {
+    setActiveTab(tab);
+    if (tab === 'Act') setLayers(prev => prev.community ? prev : { ...prev, community: true });
+  }, []);
+
   const handleTourComplete = useCallback(() => {
     setTourPhase('exploring');
     setShowKeyboardHint(false);
@@ -139,9 +145,10 @@ export default function App() {
         actPin={effectiveActPin}
         onActPick={setActPin}
         onIntroComplete={handleIntroComplete}
+        highlightCommunityId={activeTab === 'Act' ? '980ff852-1370-412f-9df9-2dc8ddf38638' : null}
       />
 
-      <TopBar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <TopBar activeTab={activeTab} setActiveTab={handleSetActiveTab} />
 
       {activeTab === 'Discover' && (
         <Sidebar

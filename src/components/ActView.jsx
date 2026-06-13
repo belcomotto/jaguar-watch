@@ -213,6 +213,7 @@ export default function ActView({ actPin, onClearPin }) {
                 <>
                   <p className={styles.locationCoords}>{actPin.lat}°, {actPin.lng}°</p>
                   <p className={styles.locationHint}>Click map to move the pin</p>
+                  <button type="button" className={styles.locationClearBtn} onClick={onClearPin}>✕</button>
                 </>
               ) : (
                 <>

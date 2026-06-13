@@ -85,6 +85,46 @@ const FIRMS_CONF_COLOR = ['match', ['get', 'confidence'],
   '#ffcc00',
 ];
 
+function buildCommunityPopupHTML(p) {
+  const notesRow = p.notes
+    ? `<div style="border-top:1px solid rgba(99,65,47,0.15);padding-top:10px;margin-top:12px">
+         <p style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:rgba(20,20,20,0.5);margin-bottom:5px">Notes</p>
+         <p style="font-size:14px;color:#1a1a1a;line-height:1.55">${p.notes}</p>
+       </div>` : '';
+  return `<div style="font-family:'IM Fell Double Pica',serif;padding:14px 18px;min-width:420px;max-width:460px">
+    <p style="font-size:17px;color:#1a1a1a;margin-bottom:3px"><strong>${p.title}</strong></p>
+    <p style="font-size:12px;color:#8b5cf6;letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px">Community Submission</p>
+    <div style="border-top:1px solid rgba(99,65,47,0.15);padding-top:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 20px;margin-bottom:12px">
+        <div>
+          <p style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:rgba(20,20,20,0.5);margin-bottom:3px">Type of event</p>
+          <p style="font-size:14px;color:#1a1a1a">${TYPE_DISPLAY[p.type_of_event] ?? p.type_of_event}</p>
+        </div>
+        <div>
+          <p style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:rgba(20,20,20,0.5);margin-bottom:3px">Date</p>
+          <p style="font-size:14px;color:#1a1a1a">${p.date_of_event ?? '—'}</p>
+        </div>
+        <div>
+          <p style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:rgba(20,20,20,0.5);margin-bottom:3px">Evidence</p>
+          <p style="font-size:14px;color:#1a1a1a">${EVIDENCE_DISPLAY[p.evidence_type] ?? p.evidence_type}</p>
+        </div>
+        <div>
+          <p style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:rgba(20,20,20,0.5);margin-bottom:3px">Confidence</p>
+          <p style="font-size:14px;color:#1a1a1a">${CONFIDENCE_DISPLAY[p.confidence] ?? p.confidence}</p>
+        </div>
+      </div>
+      <p style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:rgba(20,20,20,0.5);margin-bottom:5px">Description</p>
+      <p style="font-size:14px;color:#1a1a1a;line-height:1.6;margin-bottom:10px">${p.description}</p>
+      <p style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:rgba(20,20,20,0.5);margin-bottom:5px">Evidence</p>
+      ${p.evidence_detail && (p.evidence_detail.startsWith('http://') || p.evidence_detail.startsWith('https://'))
+        ? `<a href="${p.evidence_detail}" target="_blank" rel="noreferrer" style="font-size:14px;color:#3C4525;line-height:1.55;word-break:break-all;text-decoration:none">↗ ${p.evidence_detail}</a>`
+        : `<p style="font-size:14px;color:#1a1a1a;line-height:1.55">${p.evidence_detail}</p>`
+      }
+    </div>
+    ${notesRow}
+  </div>`;
+}
+
 // ── Canvas-drawn map icons ────────────────────────────────────────────────────
 // Drawn at 2× so they stay crisp on retina. pixelRatio:2 tells Mapbox the
 // logical size is half the canvas size.
@@ -238,7 +278,7 @@ const WATER_PATH_PUMPS = [
   { coords: [-61.424589, -24.619062], sourceId: 'waterpath-wichipintado', file: '/data/waterpath_wichipintado.geojson', featureIdx: 2 },
 ];
 
-export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON, floodGeoJSON, floodGauges, inaGeoJSON, inaStations, mapbiomas, communityGeoJSON, actMode, actPin, onActPick, onIntroComplete }) {
+export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON, floodGeoJSON, floodGauges, inaGeoJSON, inaStations, mapbiomas, communityGeoJSON, actMode, actPin, onActPick, onIntroComplete, highlightCommunityId }) {
   const containerRef = useRef(null);
   const onIntroCompleteRef = useRef(onIntroComplete);
   const inaStationsRef = useRef([]);
@@ -246,6 +286,7 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
   const actModeRef = useRef(false);
   const onActPickRef = useRef(onActPick);
   const actMarkerRef = useRef(null);
+  const featuredPopupRef = useRef(null);
   const [overlays, setOverlays] = useState({ borders: false, places: false });
 
   const handleOverlayChange = (key, val) => setOverlays(prev => ({ ...prev, [key]: val }));
@@ -799,45 +840,9 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
       map.on('click', 'community-icon', (e) => {
         if (actModeRef.current) return;
         const p = e.features[0].properties;
-        const notesRow = p.notes
-          ? `<div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:10px;margin-top:12px">
-               <p style="font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:#888;margin-bottom:5px">Notes</p>
-               <p style="font-size:14px;color:#DED8CF;line-height:1.55">${p.notes}</p>
-             </div>` : '';
-        new mapboxgl.Popup({ className: 'pump-popup', closeButton: false, maxWidth: '480px' })
+        new mapboxgl.Popup({ className: 'community-popup', closeButton: false, maxWidth: '480px' })
           .setLngLat(e.lngLat)
-          .setHTML(`<div style="font-family:'IM Fell Double Pica',serif;padding:14px 18px;min-width:450px;max-width:480px">
-            <p style="font-size:17px;color:#DED8CF;margin-bottom:3px"><strong>${p.title}</strong></p>
-            <p style="font-size:12px;color:#8b5cf6;letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px">Community Submission</p>
-            <div style="border-top:1px solid rgba(255,255,255,0.12);padding-top:12px">
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 20px;margin-bottom:12px">
-                <div>
-                  <p style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#888;margin-bottom:3px">Type of event</p>
-                  <p style="font-size:14px;color:#DED8CF">${TYPE_DISPLAY[p.type_of_event] ?? p.type_of_event}</p>
-                </div>
-                <div>
-                  <p style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#888;margin-bottom:3px">Date</p>
-                  <p style="font-size:14px;color:#DED8CF">${p.date_of_event ?? '—'}</p>
-                </div>
-                <div>
-                  <p style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#888;margin-bottom:3px">Evidence</p>
-                  <p style="font-size:14px;color:#DED8CF">${EVIDENCE_DISPLAY[p.evidence_type] ?? p.evidence_type}</p>
-                </div>
-                <div>
-                  <p style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#888;margin-bottom:3px">Confidence</p>
-                  <p style="font-size:14px;color:#DED8CF">${CONFIDENCE_DISPLAY[p.confidence] ?? p.confidence}</p>
-                </div>
-              </div>
-              <p style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#888;margin-bottom:5px">Description</p>
-              <p style="font-size:14px;color:#DED8CF;line-height:1.6;margin-bottom:10px">${p.description}</p>
-              <p style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#888;margin-bottom:5px">Evidence</p>
-              ${p.evidence_detail && (p.evidence_detail.startsWith('http://') || p.evidence_detail.startsWith('https://'))
-                ? `<a href="${p.evidence_detail}" target="_blank" rel="noreferrer" style="font-size:14px;color:#72b84e;line-height:1.55;word-break:break-all;text-decoration:none">↗ ${p.evidence_detail}</a>`
-                : `<p style="font-size:14px;color:#DED8CF;line-height:1.55">${p.evidence_detail}</p>`
-              }
-            </div>
-            ${notesRow}
-          </div>`)
+          .setHTML(buildCommunityPopupHTML(p))
           .addTo(map);
       });
       map.on('mouseenter', 'community-icon', () => { if (!actModeRef.current) map.getCanvas().style.cursor = 'pointer'; });
@@ -1158,6 +1163,29 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
       });
     }
   }, [communityGeoJSON, mapRef]);
+
+  // Open / close the featured community popup (e.g. example entry on ACT tab)
+  useEffect(() => {
+    const map = mapRef.current;
+    featuredPopupRef.current?.remove();
+    featuredPopupRef.current = null;
+    if (!highlightCommunityId || !map) return;
+    const feature = communityGeoJSON?.features?.find(f => f.properties.id === highlightCommunityId);
+    if (!feature) return;
+    const [lng, lat] = feature.geometry.coordinates;
+    const open = () => {
+      featuredPopupRef.current = new mapboxgl.Popup({
+        className: 'community-popup',
+        closeButton: true,
+        closeOnClick: false,
+        maxWidth: '480px',
+      })
+        .setLngLat([lng, lat])
+        .setHTML(buildCommunityPopupHTML(feature.properties))
+        .addTo(map);
+    };
+    if (map.isStyleLoaded()) open(); else map.once('load', open);
+  }, [highlightCommunityId, communityGeoJSON, mapRef]);
 
   // Sync borders / place-label overlay visibility
   useEffect(() => {
