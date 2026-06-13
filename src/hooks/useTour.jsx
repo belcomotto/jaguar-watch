@@ -699,7 +699,30 @@ async function phaseFires({ pause, map, setOverlay, firmsStatsRef }) {
   await pause(5500);
 }
 
-// 3 river phases + 14 pump phases (1 intro + 13 individual) = 6 + 14 = 23 total
+async function phaseCommunity({ go, pause, map, setOverlay }) {
+  vis(map, ['firms-halo','firms-icon'], false);
+  vis(map, ['park-fill','park-line','park-label',
+            'buffer-fill','buffer-line','buffer-label',
+            'community-halo','community-icon'], true);
+
+  await go({
+    center: [-61.2, -24.85],
+    zoom: 8.5, pitch: 30, bearing: 0,
+    duration: 4000,
+    easing: t => 1 - Math.pow(1 - t, 3),
+  });
+
+  setOverlay({
+    id: 'community',
+    title: 'Act · Actuar',
+    subtitle: 'Community Monitoring',
+    body: 'This map is built to be nurtured by the communities who know this territory. Through the Act panel, anyone can run their own investigation — on the ground or digitally — and contribute evidence directly to this map. Every observation, photograph, and testimony strengthens the collective record of what is happening to the land, the water, and the people who depend on them.',
+  });
+
+  await pause(9000);
+}
+
+// 3 river phases + 14 pump phases (1 intro + 13 individual) + 3 monitoring + 1 community = 24 total
 const PHASES = [
   phasePark,
   phaseBuffer,
@@ -711,6 +734,7 @@ const PHASES = [
   phaseGauges,
   phaseInaGauges,
   phaseFires,
+  phaseCommunity,
 ];
 
 // ── Hook ──────────────────────────────────────────────────────────────────
