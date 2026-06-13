@@ -64,7 +64,7 @@ export default function App() {
   const { rows: firmsRows, geojson: firmsGeoJSON, loading: firmsLoading, error: firmsError, fetchedAt: firmsFetchedAt } = useFirmsData();
   const { gauges: floodGauges, geojson: floodGeoJSON } = useFloodData();
   const { stations: inaStations, geojson: inaGeoJSON, loading: inaLoading } = useInaGaugeData();
-  const { geojson: communityGeoJSON } = useVerifiedSubmissions(layers.community);
+  const { geojson: communityGeoJSON } = useVerifiedSubmissions(true);
 
   const firmsStats = useMemo(() => {
     const rows = firmsRows ?? [];

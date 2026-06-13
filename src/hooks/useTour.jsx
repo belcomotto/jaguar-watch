@@ -670,7 +670,7 @@ async function phaseInaGauges({ go, pause, map, setOverlay, inaStationsRef, addT
     id: 'ina-gauges',
     title: 'The Monitoring Gap',
     subtitle: 'INA sSIyAH · Telemetric (In Territory)',
-    body: 'Six telemetric (in territory) stations cover the Bermejo corridor. Three gauge river level across the upper reaches — Aguas Blancas at the Bolivian border, Embarcación, and Puerto Velaz. Puerto Lavalle, 121 km downstream of the park, provides the ground-truth reading that cross-checks the satellite models. Inside the park, a meteorological station watches conditions. El Colorado holds the only discharge data ever published for the entire Bermejo — 454 readings over 79 days (July – September 2024), then permanent silence. That 79-day record is the only time anyone measured how much water this river actually carries.',
+    bodyHtml: 'Six <strong>telemetric (in territory) stations</strong> cover the Bermejo corridor. Three gauge river level across the upper reaches — Aguas Blancas at the Bolivian border, Embarcación, and Puerto Velaz. Puerto Lavalle, 121 km downstream of the park, provides the ground-truth reading that cross-checks the satellite models. Inside the park, a meteorological station watches conditions. El Colorado holds the only discharge data ever published for the entire Bermejo — 454 readings over 79 days (July – September 2024), then permanent silence. That 79-day record is the only time anyone measured how much water this river actually carries.',
   });
 
   // Fade in an individual popup at each station
@@ -686,7 +686,8 @@ async function phaseInaGauges({ go, pause, map, setOverlay, inaStationsRef, addT
 }
 
 async function phaseFires({ pause, map, setOverlay, firmsStatsRef }) {
-  vis(map, ['ina-halo','ina-icon'], false);
+  vis(map, ['ina-halo','ina-icon',
+            'flood-halo','flood-icon'], false);
   vis(map, ['buffer-fill','buffer-line','buffer-label',
             'firms-halo','firms-icon'], true);
   setOverlay({
@@ -700,7 +701,9 @@ async function phaseFires({ pause, map, setOverlay, firmsStatsRef }) {
 }
 
 async function phaseCommunity({ go, pause, map, setOverlay }) {
-  vis(map, ['firms-halo','firms-icon'], false);
+  vis(map, ['firms-halo','firms-icon',
+            'flood-halo','flood-icon',
+            'ina-halo','ina-icon'], false);
   vis(map, ['park-fill','park-line','park-label',
             'buffer-fill','buffer-line','buffer-label',
             'community-halo','community-icon'], true);
