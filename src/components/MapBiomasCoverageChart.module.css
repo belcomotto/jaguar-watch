@@ -1,0 +1,86 @@
+.wrap {
+  margin-top: 14px;
+}
+
+.hint {
+  font-size: 10px;
+  color: var(--sand-dim);
+  font-style: italic;
+  margin-bottom: 8px;
+  letter-spacing: 0.03em;
+}
+
+/* ── Tooltip ── */
+.tooltip {
+  background: rgba(6, 10, 18, 0.92);
+  border: 1px solid rgba(222, 216, 207, 0.2);
+  border-radius: 4px;
+  padding: 10px 12px;
+  min-width: 220px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.tooltipYear {
+  font-family: 'Icone Pro', 'IM Fell Double Pica', serif;
+  font-size: 13px;
+  color: var(--sand);
+  margin-bottom: 8px;
+  letter-spacing: 0.06em;
+}
+
+.tooltipRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.tooltipSwatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.tooltipLabel {
+  font-size: 11px;
+  color: var(--sand-dim);
+  flex: 1;
+}
+
+.tooltipVal {
+  font-size: 11px;
+  color: var(--sand);
+  font-family: 'Icone Pro', 'IM Fell Double Pica', serif;
+  white-space: nowrap;
+}
+
+/* ── Legend ── */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--panel-border);
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.legendSwatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.legendLabel {
+  font-size: 10px;
+  color: var(--sand-dim);
+  letter-spacing: 0.03em;
+}

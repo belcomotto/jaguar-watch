@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import baseStyles from './ContentView.module.css';
 import styles from './AnalyzeView.module.css';
 import MapBiomasPanel from './MapBiomasPanel';
+import MapBiomasCoverageChart from './MapBiomasCoverageChart';
 
 const CONF_COLOR = { h: '#ff2200', high: '#ff2200', n: '#ff8800', nominal: '#ff8800', l: '#ffcc00', low: '#ffcc00' };
 
@@ -22,6 +23,11 @@ export default function AnalyzeView({ firmsRows, firmsLoading, firmsError, firms
     if (!firmsRows?.length) return null;
     return [...firmsRows.map(r => r.acq_date).filter(Boolean)].sort().at(-1);
   }, [firmsRows]);
+
+  const handleCoverageYearChange = useCallback(
+    y => setMapbiomas(prev => ({ ...prev, year: y, enabled: true })),
+    [setMapbiomas]
+  );
 
   return (
     <div className={baseStyles.view}>
@@ -62,9 +68,13 @@ export default function AnalyzeView({ firmsRows, firmsLoading, firmsError, firms
             <span className={styles.cardSub}>MapBiomas Gran Chaco · Collection 5 · 30 m · 1985–2023</span>
           </div>
           <div className={styles.cardBody}>
-            <p className={styles.desc}>Annual 30 m land-cover classification using Landsat imagery, 1985–2023. Slide through the years to watch the agricultural frontier advance into dry Chaco forest — or use the play button to animate the full 38-year sequence.</p>
+            <p className={styles.desc}>Annual 30 m land-cover classification using Landsat imagery, 1985–2023. Slide through the years to watch the agricultural frontier advance into dry Chaco forest — or use the play button to animate the full 38-year sequence. Click any bar in the chart below to jump the map to that year.</p>
             <div className={styles.divider} />
             <MapBiomasPanel mapbiomas={mapbiomas} setMapbiomas={setMapbiomas} />
+            <MapBiomasCoverageChart
+              year={mapbiomas.year}
+              onYearChange={handleCoverageYearChange}
+            />
           </div>
         </div>
 
