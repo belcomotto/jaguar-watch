@@ -15,9 +15,9 @@
   background: rgba(6, 10, 18, 0.92);
   border: 1px solid rgba(222, 216, 207, 0.2);
   border-radius: 4px;
-  padding: 10px 12px;
+  padding: 10px 12px 18px;
   min-width: 220px;
-  max-height: 320px;
+  max-height: 360px;
   overflow-y: auto;
 }
 
@@ -27,6 +27,7 @@
   color: #ded8cf;
   margin-bottom: 8px;
   letter-spacing: 0.06em;
+  white-space: nowrap;
 }
 
 .tooltipRow {
