@@ -5,6 +5,7 @@ import {
 } from 'recharts';
 import coverageData from '../data/mapbiomas-coverage.json';
 import styles from './MapBiomasCoverageChart.module.css';
+import { useLang } from '../context/LangContext';
 
 const { years, classes, data } = coverageData;
 
@@ -20,12 +21,13 @@ const CHART_DATA = years.map(y => {
 const COLOR_MAP = Object.fromEntries(classes.map(c => [c.id, c.color]));
 const LABEL_MAP = Object.fromEntries(classes.map(c => [c.id, c.label]));
 
-function CustomTooltip({ active, payload, label, selectedYear }) {
+function CustomTooltip({ active, payload, label, selectedYear, lang }) {
   if (!active || !payload?.length) return null;
   const isSelected = label === selectedYear;
+  const selectedLabel = lang === 'es' ? ' ◀ seleccionado' : ' ◀ selected';
   return (
     <div className={styles.tooltip}>
-      <p className={styles.tooltipYear}>{label}{isSelected ? ' ◀ selected' : ''}</p>
+      <p className={styles.tooltipYear}>{label}{isSelected ? selectedLabel : ''}</p>
       {[...payload].reverse().map(p => (
         <div key={p.dataKey} className={styles.tooltipRow}>
           <span className={styles.tooltipSwatch} style={{ background: p.fill }} />
@@ -51,6 +53,7 @@ function CustomLegend() {
 }
 
 export default function MapBiomasCoverageChart({ year, onYearChange }) {
+  const { lang } = useLang();
   const handleClick = useCallback((e) => {
     if (e?.activeLabel) onYearChange?.(e.activeLabel);
   }, [onYearChange]);
@@ -62,7 +65,7 @@ export default function MapBiomasCoverageChart({ year, onYearChange }) {
 
   return (
     <div className={styles.wrap}>
-      <p className={styles.hint}>Click a bar to jump the map to that year</p>
+      <p className={styles.hint}>{lang === 'es' ? 'Hacé clic en una barra para saltar a ese año en el mapa' : 'Click a bar to jump the map to that year'}</p>
       <ResponsiveContainer width="100%" height={260}>
         <BarChart
           data={CHART_DATA}
@@ -87,7 +90,7 @@ export default function MapBiomasCoverageChart({ year, onYearChange }) {
             width={34}
           />
           <Tooltip
-            content={<CustomTooltip selectedYear={year} />}
+            content={<CustomTooltip selectedYear={year} lang={lang} />}
             cursor={{ fill: 'rgba(222,216,207,0.07)' }}
           />
           {classes.map(cls => (

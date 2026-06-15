@@ -299,6 +299,154 @@
   letter-spacing: 0.04em;
 }
 
+/* ── Sentinel sidebar panel ── */
+.sentPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sentHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sentToggle {
+  font-family: 'Icone Pro', 'IM Fell Double Pica', serif;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 5px 14px;
+  border: 1px solid rgba(184, 116, 58, 0.55);
+  border-radius: 3px;
+  color: #b8743a;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.sentToggleOn {
+  background: var(--green) !important;
+  border-color: var(--green) !important;
+  color: #faf9f7 !important;
+}
+
+.sentStatus {
+  font-size: 11px;
+  color: var(--sand-dim);
+  font-style: italic;
+  font-family: 'IM Fell Double Pica', serif;
+}
+
+.sentGrid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.sentGrid5 {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+}
+
+.sentTab {
+  font-family: 'Icone Pro', 'IM Fell Double Pica', serif;
+  font-size: 9px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 5px 2px;
+  border: 1px solid rgba(184, 116, 58, 0.5);
+  border-radius: 3px;
+  color: #b8743a;
+  background: transparent;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+  line-height: 1.3;
+  text-align: center;
+  white-space: normal;
+}
+
+.sentTab:hover {
+  border-color: rgba(184, 116, 58, 0.8);
+  color: #d4904a;
+}
+
+.sentTabOn {
+  font-family: 'Icone Pro', 'IM Fell Double Pica', serif;
+  font-size: 9px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 5px 2px;
+  border-radius: 3px;
+  line-height: 1.3;
+  text-align: center;
+  white-space: normal;
+  background: var(--green);
+  border: 1px solid var(--green);
+  color: #faf9f7;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.sentMiniGrad {
+  height: 8px;
+  border-radius: 2px;
+  border: 1px solid rgba(222, 216, 207, 0.18);
+}
+
+.sentMiniTicks {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 3px;
+}
+
+.sentMiniTickLabel {
+  font-size: 9px;
+  color: var(--sand-dim);
+  letter-spacing: 0.04em;
+  font-family: 'IM Fell Double Pica', serif;
+}
+
+.sentMiniSwatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-top: 2px;
+}
+
+.sentMiniSwatchRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sentMiniSwatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.sentMiniSwatchLabel {
+  font-size: 9px;
+  color: var(--sand-dim);
+  font-family: 'IM Fell Double Pica', serif;
+}
+
+.sentMiniEndpoints {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+  font-size: 10px;
+  color: var(--sand-dim);
+  font-family: 'IM Fell Double Pica', serif;
+  line-height: 1.3;
+}
+
 /* Legend */
 .legend {
   padding: 20px 24px;

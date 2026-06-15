@@ -1,8 +1,15 @@
 import { useEffect, useState } from 'react';
 import styles from './KeyboardHintOverlay.module.css';
+import { useLang } from '../context/LangContext';
+
+const LABEL = {
+  en: 'use the space and arrows to pause, move forward and back',
+  es: 'usá el espacio y las flechas para pausar, avanzar y retroceder',
+};
 
 export default function KeyboardHintOverlay({ show }) {
   const [phase, setPhase] = useState('hidden'); // hidden | visible | fading
+  const { lang } = useLang();
 
   useEffect(() => {
     if (!show) {
@@ -24,7 +31,7 @@ export default function KeyboardHintOverlay({ show }) {
         <span className={styles.keySpace}>Space</span>
         <span className={styles.key}>→</span>
       </div>
-      <p className={styles.label}>use the space and arrows to pause, move forward and back</p>
+      <p className={styles.label}>{LABEL[lang] ?? LABEL.en}</p>
     </div>
   );
 }

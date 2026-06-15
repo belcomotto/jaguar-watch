@@ -1,5 +1,27 @@
 import { useEffect, useRef, useState } from 'react';
 import styles from './TourOverlay.module.css';
+import { useLang } from '../context/LangContext';
+
+const T = {
+  en: {
+    eyebrow: 'Guided Tour',
+    exit: 'Exit ✕',
+    detections: 'active detections · last 5 days',
+    high: 'high',
+    nominal: 'nominal',
+    low: 'low',
+    lastDetection: 'Last detection:',
+  },
+  es: {
+    eyebrow: 'Recorrido Guiado',
+    exit: 'Salir ✕',
+    detections: 'detecciones activas · últimos 5 días',
+    high: 'alta',
+    nominal: 'nominal',
+    low: 'baja',
+    lastDetection: 'Última detección:',
+  },
+};
 
 function Slideshow({ images }) {
   const [cur, setCur] = useState(0);
@@ -27,8 +49,9 @@ function Slideshow({ images }) {
 
 export default function TourOverlay({ step, onSkip }) {
   const cardRef = useRef(null);
+  const { lang } = useLang();
+  const t = T[lang] ?? T.en;
 
-  // Fade out fully (350ms) then fade in on each step change
   useEffect(() => {
     const el = cardRef.current;
     if (!el) return;
@@ -44,8 +67,8 @@ export default function TourOverlay({ step, onSkip }) {
   return (
     <div className={styles.card} ref={cardRef}>
       <div className={styles.header}>
-        <span className={styles.eyebrow}>Guided Tour</span>
-        <button className={styles.exitBtn} onClick={onSkip}>Exit ✕</button>
+        <span className={styles.eyebrow}>{t.eyebrow}</span>
+        <button className={styles.exitBtn} onClick={onSkip}>{t.exit}</button>
       </div>
 
       {step.title && <h3 className={styles.title}>{step.title}</h3>}
@@ -94,21 +117,21 @@ export default function TourOverlay({ step, onSkip }) {
         <div className={styles.statsBlock}>
           <div className={styles.statTotal}>
             <span className={styles.statNum}>{s.total}</span>
-            <span className={styles.statLbl}>active detections · last 5 days</span>
+            <span className={styles.statLbl}>{t.detections}</span>
           </div>
           <div className={styles.confRow}>
             <span className={styles.dot} style={{ background: '#ff2200' }} />
             <span className={styles.confVal}>{s.high}</span>
-            <span className={styles.confLbl}>high</span>
+            <span className={styles.confLbl}>{t.high}</span>
             <span className={styles.dot} style={{ background: '#ff8800' }} />
             <span className={styles.confVal}>{s.nominal}</span>
-            <span className={styles.confLbl}>nominal</span>
+            <span className={styles.confLbl}>{t.nominal}</span>
             <span className={styles.dot} style={{ background: '#ffcc00' }} />
             <span className={styles.confVal}>{s.low}</span>
-            <span className={styles.confLbl}>low</span>
+            <span className={styles.confLbl}>{t.low}</span>
           </div>
           {s.lastDetection && (
-            <p className={styles.statMeta}>Last detection: {s.lastDetection} · {s.fetchedAt}</p>
+            <p className={styles.statMeta}>{t.lastDetection} {s.lastDetection} · {s.fetchedAt}</p>
           )}
         </div>
       )}

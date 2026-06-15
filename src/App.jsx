@@ -14,6 +14,7 @@ import { useFloodData } from './hooks/useFloodData';
 import { useInaGaugeData } from './hooks/useInaGaugeData';
 import { useVerifiedSubmissions } from './hooks/useVerifiedSubmissions';
 import { useTour } from './hooks/useTour';
+import { LangProvider, useLang } from './context/LangContext';
 
 const DEFAULT_LAYERS = {
   park: false,
@@ -45,7 +46,8 @@ function buildMonths() {
 const MONTHS = buildMonths();
 const INITIAL_DATE = MONTHS[MONTHS.length - 1];
 
-export default function App() {
+function AppInner() {
+  const { lang } = useLang();
   // null = intro playing, 'welcome' = modal, 'touring' = tour, 'exploring' = free
   const [tourPhase, setTourPhase] = useState(null);
   const [activeTab, setActiveTab] = useState(null);
@@ -55,6 +57,12 @@ export default function App() {
     enabled: false,
     band: 'true-color',
     date: INITIAL_DATE,
+  });
+  const [sentinelView, setSentinelView] = useState({
+    enabled: false,
+    season: 'dry',
+    band: 'true_color',
+    dividerLng: -61.2625, // center of the Sentinel bbox
   });
   const [mapbiomas, setMapbiomas] = useState({ enabled: false, year: 2023 });
   const mapRef = useRef(null);
@@ -91,7 +99,7 @@ export default function App() {
     setLayers(POST_TOUR_LAYERS);
   }, []);
 
-  const { overlay, startTour, stopTour, goBack, goForward, togglePause, paused } = useTour(mapRef, { onComplete: handleTourComplete, firmsStats, floodGauges, inaStations });
+  const { overlay, startTour, stopTour, goBack, goForward, togglePause, paused } = useTour(mapRef, { onComplete: handleTourComplete, firmsStats, floodGauges, inaStations, communityData: communityGeoJSON, lang });
 
   const handleIntroComplete = useCallback(() => setTourPhase('welcome'), []);
 
@@ -146,6 +154,9 @@ export default function App() {
         onActPick={setActPin}
         onIntroComplete={handleIntroComplete}
         highlightCommunityId={activeTab === 'Act' ? '980ff852-1370-412f-9df9-2dc8ddf38638' : null}
+        lang={lang}
+        sentinelView={sentinelView}
+        setSentinelView={setSentinelView}
       />
 
       <TopBar activeTab={activeTab} setActiveTab={handleSetActiveTab} />
@@ -156,6 +167,8 @@ export default function App() {
           setLayers={setLayers}
           mapbiomas={mapbiomas}
           setMapbiomas={setMapbiomas}
+          sentinelView={sentinelView}
+          setSentinelView={setSentinelView}
         />
       )}
 
@@ -175,6 +188,8 @@ export default function App() {
           setMapbiomas={setMapbiomas}
           inaStations={inaStations}
           inaLoading={inaLoading}
+          sentinelView={sentinelView}
+          setSentinelView={setSentinelView}
         />
       )}
 
@@ -205,4 +220,8 @@ export default function App() {
       )}
     </div>
   );
+}
+
+export default function App() {
+  return <LangProvider><AppInner /></LangProvider>;
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import styles from './MapBiomasPanel.module.css';
+import { useLang } from '../context/LangContext';
 
 const FIRST_YEAR = 1985;
 const LAST_YEAR  = 2023;
@@ -37,6 +38,7 @@ export default function MapBiomasPanel({ mapbiomas, setMapbiomas, compact = fals
   const [playing, setPlaying]   = useState(false);
   const [showLegend, setShowLegend] = useState(false);
   const intervalRef = useRef(null);
+  const { lang } = useLang();
 
   // Animate through years
   useEffect(() => {
@@ -65,7 +67,7 @@ export default function MapBiomasPanel({ mapbiomas, setMapbiomas, compact = fals
           className={`${styles.toggleBtn} ${mapbiomas.enabled ? styles.toggleOn : ''}`}
           onClick={toggle}
         >
-          {mapbiomas.enabled ? 'On' : 'Off'}
+          {mapbiomas.enabled ? (lang === 'es' ? 'Activo' : 'On') : (lang === 'es' ? 'Inactivo' : 'Off')}
         </button>
         <span className={styles.status}>MapBiomas · Col. 5 · 1985–2023</span>
       </div>
@@ -77,7 +79,7 @@ export default function MapBiomasPanel({ mapbiomas, setMapbiomas, compact = fals
             className={`${styles.playBtn} ${playing ? styles.playBtnActive : ''}`}
             onClick={() => setPlaying(p => !p)}
             disabled={!mapbiomas.enabled}
-            title={playing ? 'Pause animation' : 'Play through years'}
+            title={playing ? (lang === 'es' ? 'Pausar animación' : 'Pause animation') : (lang === 'es' ? 'Reproducir años' : 'Play through years')}
           >
             {playing ? '⏸' : '▶'}
           </button>
@@ -105,7 +107,7 @@ export default function MapBiomasPanel({ mapbiomas, setMapbiomas, compact = fals
         className={styles.legendToggle}
         onClick={() => setShowLegend(v => !v)}
       >
-        {showLegend ? '▲' : '▼'} Legend
+        {showLegend ? '▲' : '▼'} {lang === 'es' ? 'Leyenda' : 'Legend'}
       </button>
 
       {showLegend && (

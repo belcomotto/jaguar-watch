@@ -4,6 +4,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { STATUS_COLORS, STATUS_LABELS, GRID_MATCH_COLOR, GRID_MATCH_LABEL } from '../data/floodGauges';
 import { INA_TYPE_COLOR, INA_TYPE_LABEL } from '../data/inaGauges';
 import MapLayerPanel from './MapLayerPanel';
+import SentinelOverlay from './SentinelOverlay';
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
@@ -278,12 +279,13 @@ const WATER_PATH_PUMPS = [
   { coords: [-61.424589, -24.619062], sourceId: 'waterpath-wichipintado', file: '/data/waterpath_wichipintado.geojson', featureIdx: 2 },
 ];
 
-export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON, floodGeoJSON, floodGauges, inaGeoJSON, inaStations, mapbiomas, communityGeoJSON, actMode, actPin, onActPick, onIntroComplete, highlightCommunityId }) {
+export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON, floodGeoJSON, floodGauges, inaGeoJSON, inaStations, mapbiomas, communityGeoJSON, actMode, actPin, onActPick, onIntroComplete, highlightCommunityId, sentinelView, setSentinelView }) {
   const containerRef = useRef(null);
   const onIntroCompleteRef = useRef(onIntroComplete);
   const inaStationsRef = useRef([]);
   const floodGaugesRef = useRef([]);
   const actModeRef = useRef(false);
+  const sentCanvasRef = useRef(null);
   const onActPickRef = useRef(onActPick);
   const actMarkerRef = useRef(null);
   const featuredPopupRef = useRef(null);
@@ -423,6 +425,21 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
       map.addLayer({ id: 'park-line', type: 'line', source: 'park',
         paint: { 'line-color': '#ffffff', 'line-width': 2, 'line-opacity': 0.9 },
         layout: { visibility: 'none' } });
+
+      // ── Sentinel-2 canvas source for before/after split ───────────────────
+      {
+        const sentCanvas = document.createElement('canvas');
+        sentCanvas.width  = 2048;
+        sentCanvas.height = 1465; // round(2048 * (25.659090 - 24.106658) / (62.347412 - 60.177612))
+        sentCanvasRef.current = sentCanvas;
+        map.addSource('_sentinel_split', {
+          type: 'canvas', canvas: sentCanvas, animate: true,
+          coordinates: [[-62.347412,-24.106658],[-60.177612,-24.106658],[-60.177612,-25.659090],[-62.347412,-25.659090]],
+        });
+        map.addLayer({ id: '_sentinel_split_layer', type: 'raster', source: '_sentinel_split',
+          paint: { 'raster-opacity': 0, 'raster-fade-duration': 0 },
+        }, 'park-fill');
+      }
 
       // ── Buffer — white dashed (hidden until activated) ────────────────────
       map.addSource('buffer', { type: 'geojson', data: '/data/buffer_area.geojson' });
@@ -1171,7 +1188,8 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
     featuredPopupRef.current = null;
     if (!highlightCommunityId || !map) return;
 
-    const LNG = -61.12394, LAT = -25.04209;
+    const VIEW_LNG = -61.67311, VIEW_LAT = -24.46159; // map framing 
+    const PIN_LNG  = -61.12392, PIN_LAT  = -25.04207; // popup anchor
     const dummyProps = {
       title: 'EXAMPLE EVENT',
       type_of_event: 'other',
@@ -1184,7 +1202,7 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
     };
 
     const open = () => {
-      map.flyTo({ center: [LNG, LAT], zoom: Math.max(map.getZoom(), 10), duration: 1400,
+      map.flyTo({ center: [VIEW_LNG, VIEW_LAT], zoom: 8, duration: 1400,
         easing: t => 1 - Math.pow(1 - t, 3) });
       featuredPopupRef.current = new mapboxgl.Popup({
         className: 'community-popup',
@@ -1193,12 +1211,19 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
         maxWidth: '480px',
         offset: 14,
       })
-        .setLngLat([LNG, LAT])
+        .setLngLat([PIN_LNG, PIN_LAT])
         .setHTML(buildCommunityPopupHTML(dummyProps))
         .addTo(map);
     };
 
-    if (map.isStyleLoaded()) open(); else map.once('load', open);
+    // Use getSource check (not isStyleLoaded) — same pattern as community GeoJSON
+    // effect. isStyleLoaded() can return false mid-render even when the map is
+    // ready, leaving once('load') stuck because the event already fired.
+    if (map.getSource('community')) {
+      setTimeout(open, 0);
+    } else {
+      map.once('load', open);
+    }
   }, [highlightCommunityId, mapRef]);
 
   // Sync borders / place-label overlay visibility
@@ -1219,6 +1244,9 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
   return (
     <div style={{ position: 'absolute', inset: 0 }}>
       <div ref={containerRef} style={{ position: 'absolute', inset: 0 }} />
+      {sentinelView && setSentinelView && (
+        <SentinelOverlay mapRef={mapRef} sentinelView={sentinelView} setSentinelView={setSentinelView} sentCanvasRef={sentCanvasRef} />
+      )}
       <MapLayerPanel overlays={overlays} onChange={handleOverlayChange} />
     </div>
   );
