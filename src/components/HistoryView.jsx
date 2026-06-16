@@ -77,7 +77,7 @@ const SECTIONS_EN = [
     title: 'The Jaguar Returns',
     body: `In September 2019, jaguar footprints were recorded in the national park for the first time. Camera traps confirmed it: a solitary male, later named Qaramta, roaming the dry forest. He was one of fewer than ten confirmed jaguars remaining across the million square kilometers of Argentine Gran Chaco — and all of them were male. Without females, the species faced a genetic dead end in the Chaco.\n\nIn March 2024, Keraná — a female jaguar rescued in Paraguay as a cub after her mother was killed by hunters — became the first female jaguar released into El Impenetrable. Others followed: Nalá, born at the park's breeding center; Acaí, translocated from Iberá; and in March 2025, Miní — the first wild-born jaguar ever translocated between wild populations anywhere in the world.\n\nThe jaguar's return is not just ecological. It is, as Jaguar Rivers puts it, proof that if the jaguar returns, everything else can follow. The rivers, the forests, the people, the future.`,
     images: [
-      { src: '/images/history/2018-present-1.jpg', caption: 'Jaguar footprint — drone survey, Yungas landscapes. Photo: Lucinda Di Martino. Fundación Rewilding Argentina.' },
+      { src: '/images/history/jaguares-yaguarete-argentina-chaco-1.jpg', caption: 'The jaguar footprint recorded in El Impenetrable National Park in September 2019 — the first confirmed evidence of a jaguar in the park, the sighting that set the rewilding program in motion.' },
       { src: '/images/history/2018-present-2.jpg', caption: 'Nalá and her cub, July 2025. Photo: Pablo Luna. Fundación Rewilding Argentina.' },
     ],
   },
@@ -164,7 +164,7 @@ const SECTIONS_ES = [
     title: 'El Jaguar Regresa',
     body: `En septiembre de 2019 se registraron huellas de jaguar en el parque nacional por primera vez. Las cámaras trampa lo confirmaron: un macho solitario, al que luego llamaron Qaramta, recorriendo el bosque seco. Era uno de menos de diez jaguares confirmados que quedaban en los millones de kilómetros cuadrados del Gran Chaco argentino — y todos eran machos. Sin hembras, la especie enfrentaba un callejón sin salida genético en el Chaco.\n\nEn marzo de 2024, Keraná — una jaguar rescatada en Paraguay siendo cachorra tras el asesinato de su madre por cazadores — se convirtió en la primera hembra jaguar liberada en El Impenetrable. Otras la siguieron: Nalá, nacida en el centro de cría del parque; Acaí, trasladada desde Iberá; y en marzo de 2025, Miní — la primera jaguar silvestre trasladada entre poblaciones silvestres en cualquier lugar del mundo.\n\nEl regreso del jaguar no es solo ecológico. Es, como lo expresa Jaguar Rivers, la prueba de que si el jaguar vuelve, todo lo demás puede seguir. Los ríos, los bosques, las personas, el futuro.`,
     images: [
-      { src: '/images/history/2018-present-1.jpg', caption: 'Huella de jaguar — relevamiento con dron, paisajes de Yungas. Foto: Lucinda Di Martino. Fundación Rewilding Argentina.' },
+      { src: '/images/history/jaguares-yaguarete-argentina-chaco-1.jpg', caption: 'La huella de jaguar registrada en el Parque Nacional El Impenetrable en septiembre de 2019 — la primera evidencia confirmada de un jaguar en el parque, el hallazgo que dio inicio al programa de rewilding.' },
       { src: '/images/history/2018-present-2.jpg', caption: 'Nalá y su cría, julio de 2025. Foto: Pablo Luna. Fundación Rewilding Argentina.' },
     ],
   },
