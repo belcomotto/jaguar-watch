@@ -419,14 +419,28 @@ function InfoRow({ id, label, layerInfo, descBtn }) {
 }
 
 
+const TAB = {
+  position: 'fixed', top: '50%', transform: 'translateY(-50%)',
+  zIndex: 11, width: 22, height: 56,
+  background: 'var(--panel-bg)', border: '1px solid var(--panel-border)',
+  borderLeft: 'none', borderRadius: '0 5px 5px 0',
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  cursor: 'pointer', backdropFilter: 'blur(12px)',
+  boxShadow: '2px 0 8px rgba(0,0,0,0.08)',
+  fontSize: 14, color: 'var(--brown)', userSelect: 'none',
+  padding: 0, transition: 'left 0.28s ease',
+};
+
 export default function Sidebar({ layers, setLayers, mapbiomas, setMapbiomas, sentinelView, setSentinelView }) {
   const { lang } = useLang();
   const g = GROUPS[lang] ?? GROUPS.en;
   const layerInfo = getLayerInfo(lang);
   const toggleLayer = (id) => setLayers(prev => ({ ...prev, [id]: !prev[id] }));
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <aside className={styles.sidebar}>
+    <>
+    <aside className={`${styles.sidebar}${collapsed ? ` ${styles.sidebarCollapsed}` : ''}`}>
       <div className={styles.panelScroll}>
 
         {/* 1 — Protected Areas */}
@@ -527,5 +541,14 @@ export default function Sidebar({ layers, setLayers, mapbiomas, setMapbiomas, se
 
       </div>
     </aside>
+
+    <button
+      onClick={() => setCollapsed(c => !c)}
+      style={{ ...TAB, left: collapsed ? '4px' : '380px' }}
+      title={collapsed ? 'Expand panel' : 'Collapse panel'}
+    >
+      {collapsed ? '›' : '‹'}
+    </button>
+    </>
   );
 }

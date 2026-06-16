@@ -14,6 +14,12 @@
   backdrop-filter: blur(12px);
   box-shadow: 0 4px 28px rgba(0,0,0,0.10);
   overflow: hidden;
+  transition: transform 0.28s ease;
+}
+
+.sidebarCollapsed {
+  transform: translateX(calc(-100% - 24px));
+  pointer-events: none;
 }
 
 /* Layer panel */

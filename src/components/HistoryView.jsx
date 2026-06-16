@@ -205,9 +205,22 @@ function renderText(text) {
   ));
 }
 
+const CONTENT_TAB = {
+  position: 'fixed', top: '50%', transform: 'translateY(-50%)',
+  zIndex: 11, width: 22, height: 56,
+  background: 'var(--panel-bg)', border: '1px solid var(--panel-border)',
+  borderLeft: 'none', borderRadius: '0 5px 5px 0',
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  cursor: 'pointer', backdropFilter: 'blur(12px)',
+  boxShadow: '2px 0 8px rgba(0,0,0,0.08)',
+  fontSize: 14, color: 'var(--brown)', userSelect: 'none',
+  padding: 0, transition: 'left 0.28s ease',
+};
+
 export default function HistoryView() {
   const [lightbox, setLightbox] = useState(null);
   const [zoomed, setZoomed] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const { lang } = useLang();
   const ui = UI[lang] ?? UI.en;
   const sections = lang === 'es' ? SECTIONS_ES : SECTIONS_EN;
@@ -223,7 +236,7 @@ export default function HistoryView() {
 
   return (
     <>
-      <div className={styles.view}>
+      <div className={`${styles.view}${collapsed ? ` ${styles.viewCollapsed}` : ''}`}>
         <div className={styles.scroll}>
           <header className={styles.viewHeader}>
             <h2 className={styles.viewTitle}>{ui.title}</h2>
@@ -293,6 +306,14 @@ export default function HistoryView() {
           </div>
         </div>
       )}
+
+      <button
+        onClick={() => setCollapsed(c => !c)}
+        style={{ ...CONTENT_TAB, left: collapsed ? '4px' : '50vw' }}
+        title={collapsed ? 'Expand panel' : 'Collapse panel'}
+      >
+        {collapsed ? '›' : '‹'}
+      </button>
     </>
   );
 }

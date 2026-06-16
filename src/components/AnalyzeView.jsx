@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import baseStyles from './ContentView.module.css';
 import styles from './AnalyzeView.module.css';
 import MapBiomasPanel from './MapBiomasPanel';
@@ -298,9 +298,22 @@ function StatusDot({ color }) {
   return <span className={styles.statusDot} style={{ background: color }} />;
 }
 
+const CONTENT_TAB = {
+  position: 'fixed', top: '50%', transform: 'translateY(-50%)',
+  zIndex: 11, width: 22, height: 56,
+  background: 'var(--panel-bg)', border: '1px solid var(--panel-border)',
+  borderLeft: 'none', borderRadius: '0 5px 5px 0',
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  cursor: 'pointer', backdropFilter: 'blur(12px)',
+  boxShadow: '2px 0 8px rgba(0,0,0,0.08)',
+  fontSize: 14, color: 'var(--brown)', userSelect: 'none',
+  padding: 0, transition: 'left 0.28s ease',
+};
+
 export default function AnalyzeView({ firmsRows, firmsLoading, firmsError, firmsFetchedAt, mapbiomas, setMapbiomas, inaStations, inaLoading, sentinelView, setSentinelView }) {
   const { lang } = useLang();
   const t = T[lang] ?? T.en;
+  const [collapsed, setCollapsed] = useState(false);
 
   const counts = useMemo(() => {
     if (!firmsRows?.length) return { total: 0, high: 0, nominal: 0, low: 0 };
@@ -321,7 +334,8 @@ export default function AnalyzeView({ firmsRows, firmsLoading, firmsError, firms
   );
 
   return (
-    <div className={baseStyles.view}>
+    <>
+    <div className={`${baseStyles.view}${collapsed ? ` ${baseStyles.viewCollapsed}` : ''}`}>
       <div className={baseStyles.scroll}>
 
         <header className={baseStyles.viewHeader}>
@@ -622,5 +636,14 @@ export default function AnalyzeView({ firmsRows, firmsLoading, firmsError, firms
 
       </div>
     </div>
+
+    <button
+      onClick={() => setCollapsed(c => !c)}
+      style={{ ...CONTENT_TAB, left: collapsed ? '4px' : '50vw' }}
+      title={collapsed ? 'Expand panel' : 'Collapse panel'}
+    >
+      {collapsed ? '›' : '‹'}
+    </button>
+    </>
   );
 }

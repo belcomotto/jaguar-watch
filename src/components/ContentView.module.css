@@ -11,6 +11,12 @@
   border-radius: 6px;
   box-shadow: 0 4px 32px rgba(0,0,0,0.12);
   overflow: hidden;
+  transition: transform 0.28s ease;
+}
+
+.viewCollapsed {
+  transform: translateX(calc(-100% - 20px));
+  pointer-events: none;
 }
 
 .scroll {
