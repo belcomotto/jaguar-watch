@@ -15,6 +15,7 @@ import { useInaGaugeData } from './hooks/useInaGaugeData';
 import { useVerifiedSubmissions } from './hooks/useVerifiedSubmissions';
 import { useTour } from './hooks/useTour';
 import { LangProvider, useLang } from './context/LangContext';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 const DEFAULT_LAYERS = {
   park: false,
@@ -223,5 +224,5 @@ function AppInner() {
 }
 
 export default function App() {
-  return <LangProvider><AppInner /></LangProvider>;
+  return <LangProvider><AppInner /><SpeedInsights /></LangProvider>;
 }
