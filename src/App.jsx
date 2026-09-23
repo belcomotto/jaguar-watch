@@ -12,6 +12,7 @@ import ActView from './components/ActView';
 import { useFirmsData } from './hooks/useFirmsData';
 import { useFloodData } from './hooks/useFloodData';
 import { useInaGaugeData } from './hooks/useInaGaugeData';
+import { useMadesGaugeData } from './hooks/useMadesGaugeData';
 import { useVerifiedSubmissions } from './hooks/useVerifiedSubmissions';
 import { useTour } from './hooks/useTour';
 import { LangProvider, useLang } from './context/LangContext';
@@ -27,6 +28,7 @@ const DEFAULT_LAYERS = {
   gsw_transitions: false,
   floodGauges: false,
   inaStations: false,
+  madesStations: false,
   community: false,
 };
 
@@ -74,6 +76,7 @@ function AppInner() {
   const { rows: firmsRows, geojson: firmsGeoJSON, loading: firmsLoading, error: firmsError, fetchedAt: firmsFetchedAt } = useFirmsData();
   const { gauges: floodGauges, geojson: floodGeoJSON } = useFloodData();
   const { stations: inaStations, geojson: inaGeoJSON, loading: inaLoading } = useInaGaugeData();
+  const { stations: madesStations, geojson: madesGeoJSON } = useMadesGaugeData();
   const { geojson: communityGeoJSON } = useVerifiedSubmissions(true);
 
   const firmsStats = useMemo(() => {
@@ -149,6 +152,8 @@ function AppInner() {
         floodGauges={floodGauges}
         inaGeoJSON={inaGeoJSON}
         inaStations={inaStations}
+        madesGeoJSON={madesGeoJSON}
+        madesStations={madesStations}
         mapbiomas={mapbiomas}
         communityGeoJSON={communityGeoJSON}
         actMode={activeTab === 'Act'}

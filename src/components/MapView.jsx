@@ -3,6 +3,7 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { STATUS_COLORS, STATUS_LABELS, GRID_MATCH_COLOR, GRID_MATCH_LABEL } from '../data/floodGauges';
 import { INA_TYPE_COLOR, INA_TYPE_LABEL } from '../data/inaGauges';
+import { MADES_COLOR, MADES_TYPE_LABEL } from '../data/madesGauges';
 import MapLayerPanel from './MapLayerPanel';
 import SentinelOverlay from './SentinelOverlay';
 
@@ -279,10 +280,11 @@ const WATER_PATH_PUMPS = [
   { coords: [-61.424589, -24.619062], sourceId: 'waterpath-wichipintado', file: '/data/waterpath_wichipintado.geojson', featureIdx: 2 },
 ];
 
-export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON, floodGeoJSON, floodGauges, inaGeoJSON, inaStations, mapbiomas, communityGeoJSON, actMode, actPin, onActPick, onIntroComplete, highlightCommunityId, sentinelView, setSentinelView }) {
+export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON, floodGeoJSON, floodGauges, inaGeoJSON, inaStations, madesGeoJSON, madesStations, mapbiomas, communityGeoJSON, actMode, actPin, onActPick, onIntroComplete, highlightCommunityId, sentinelView, setSentinelView }) {
   const containerRef = useRef(null);
   const onIntroCompleteRef = useRef(onIntroComplete);
-  const inaStationsRef = useRef([]);
+  const inaStationsRef   = useRef([]);
+  const madesStationsRef = useRef([]);
   const floodGaugesRef = useRef([]);
   const actModeRef = useRef(false);
   const sentCanvasRef = useRef(null);
@@ -326,6 +328,7 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
       map.addImage('station-level',  stationIcon(INA_TYPE_COLOR.river_level),              { pixelRatio: 2 });
       map.addImage('station-meteo',  stationIcon(INA_TYPE_COLOR.meteo),                    { pixelRatio: 2 });
       map.addImage('station-offline',stationIcon(INA_TYPE_COLOR.discharge_gauge_offline, true), { pixelRatio: 2 });
+      map.addImage('station-mades',  stationIcon(MADES_COLOR),                             { pixelRatio: 2 });
 
       // ── Mapbox Streets overlay (borders + place labels) ──────────────────
       map.addSource('mapbox-streets', {
@@ -823,6 +826,77 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
       map.on('mouseenter', 'ina-icon', () => { map.getCanvas().style.cursor = 'pointer'; });
       map.on('mouseleave', 'ina-icon', () => { map.getCanvas().style.cursor = ''; });
 
+      // ── MADES Paraguay telemetric stations ────────────────────────────────
+      map.addSource('mades-stations', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] },
+      });
+      map.addLayer({
+        id: 'mades-halo',
+        type: 'circle',
+        source: 'mades-stations',
+        paint: {
+          'circle-radius': 16,
+          'circle-color': MADES_COLOR,
+          'circle-opacity': 0.2,
+          'circle-stroke-width': 0,
+        },
+        layout: { visibility: 'none' },
+      });
+      map.addLayer({
+        id: 'mades-icon',
+        type: 'symbol',
+        source: 'mades-stations',
+        layout: {
+          'icon-image': 'station-mades',
+          'icon-size': 0.72,
+          'icon-allow-overlap': true,
+          'icon-ignore-placement': true,
+          visibility: 'none',
+        },
+      });
+
+      map.on('click', 'mades-icon', (e) => {
+        if (actModeRef.current) return;
+        const p = e.features[0].properties;
+        const s = madesStationsRef.current.find(st => st.id === p.id) ?? p;
+        const isPending = s.status === 'pending' || s.status == null;
+        const isNoData  = s.status === 'no_data';
+        const typeLabel = MADES_TYPE_LABEL.en;
+
+        let body = '';
+        if (isPending) {
+          body = `<p style="font-size:13px;color:#777;font-style:italic;padding-top:8px;border-top:1px solid rgba(255,255,255,0.12);margin-top:4px">Fetching MADES data…</p>`;
+        } else if (isNoData) {
+          body = `<div style="border-top:1px solid rgba(255,255,255,0.12);padding-top:9px;margin-top:4px">
+            <p style="font-size:13px;color:#aaa;line-height:1.55;margin-bottom:6px">Live data not yet available — the MADES API endpoint needs verification.</p>
+            <p style="font-size:12px;color:#666;font-style:italic">Station coordinates confirmed. Inspect network requests on siaguapy.mades.gov.py to find the API.</p>
+          </div>`;
+        } else {
+          const anomSign = s.anomalyPct != null ? (s.anomalyPct >= 0 ? '+' : '') : '';
+          body = `<div style="border-top:1px solid rgba(255,255,255,0.12);padding-top:9px;margin-top:4px">
+            <p style="font-size:14px;color:#DED8CF;margin-bottom:5px">Level: <strong>${s.level ?? '—'} m</strong> · ${s.tendency ?? '—'}</p>
+            ${s.anomalyPct != null ? `<p style="font-size:13px;color:#aaa;margin-bottom:2px">${anomSign}${s.anomalyPct}% vs 7-day mean</p>` : ''}
+          </div>
+          <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:8px;margin-top:9px">
+            <p style="font-size:12px;color:#888;margin-bottom:2px">Last reading: ${s.latestDate ? String(s.latestDate).slice(0,16).replace('T',' ') : '—'}</p>
+            <p style="font-size:12px;color:#666;font-style:italic">MADES SIAguaPY · Código ${s.codigo}</p>
+          </div>`;
+        }
+
+        new mapboxgl.Popup({ className: 'pump-popup', closeButton: false })
+          .setLngLat(e.lngLat)
+          .setHTML(`<div style="font-family:'IM Fell Double Pica',serif;padding:10px 14px;min-width:240px">
+            <p style="font-size:15px;color:#DED8CF;margin-bottom:1px"><strong>${s.name}</strong></p>
+            <p style="font-size:12px;color:#888;margin-bottom:5px">${typeLabel} · ${s.river} · ${s.country}</p>
+            <p style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:${MADES_COLOR};margin-bottom:0">● ${isPending ? 'PENDING' : isNoData ? 'NO DATA' : 'ACTIVE'}</p>
+            ${body}
+          </div>`)
+          .addTo(map);
+      });
+      map.on('mouseenter', 'mades-icon', () => { map.getCanvas().style.cursor = 'pointer'; });
+      map.on('mouseleave', 'mades-icon', () => { map.getCanvas().style.cursor = ''; });
+
       // ── Community submissions ─────────────────────────────────────────────
       map.addImage('community-pin', communityIcon(), { pixelRatio: 2 });
       map.addSource('community', {
@@ -1014,6 +1088,8 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
       toggle('firms-icon', layers.firms);
       toggle('ina-halo',        layers.inaStations);
       toggle('ina-icon',        layers.inaStations);
+      toggle('mades-halo',      layers.madesStations);
+      toggle('mades-icon',      layers.madesStations);
       toggle('community-halo',  layers.community);
       toggle('community-icon',  layers.community);
     };
@@ -1121,10 +1197,25 @@ export default function MapView({ layers, mapRef, sentinel, months, firmsGeoJSON
     if (map.isStyleLoaded()) apply(); else map.once('load', apply);
   }, [inaGeoJSON, mapRef]);
 
+  // Push live MADES station data into the map source
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !madesGeoJSON) return;
+    const apply = () => {
+      const src = map.getSource('mades-stations');
+      if (src) src.setData(madesGeoJSON);
+    };
+    if (map.isStyleLoaded()) apply(); else map.once('load', apply);
+  }, [madesGeoJSON, mapRef]);
+
   // Keep refs in sync so click handlers always read latest fetched values
   useEffect(() => {
     inaStationsRef.current = inaStations ?? [];
   }, [inaStations]);
+
+  useEffect(() => {
+    madesStationsRef.current = madesStations ?? [];
+  }, [madesStations]);
 
   useEffect(() => {
     floodGaugesRef.current = floodGauges ?? [];
