@@ -107,14 +107,6 @@ function getLayerInfo(lang) {
             { color: '#6b7280', label: 'Discharge gauge — offline' },
           ],
     },
-    madesStations: {
-      description: isEs
-        ? '14 estaciones de nivel fluvial del sistema SIAguaPY del Ministerio del Ambiente y Desarrollo Sostenible del Paraguay (MADES). Cubren los ríos Pilcomayo (Villa Montes a Pozo Hondo), Paraguay (Puerto Ladario a Villeta) y Paraná (Salto del Guairá y Ciudad del Este). Proveen contexto de cuenca regional para el monitoreo del Bermejo.'
-        : '14 river level stations from Paraguay\'s MADES SIAguaPY monitoring network. Covers the Pilcomayo (Villa Montes to Pozo Hondo), Paraguay river (Puerto Ladario to Villeta), and Paraná (Salto del Guairá and Ciudad del Este). Provides regional basin context for Bermejo monitoring.',
-      legend: [
-        { color: '#10b981', label: isEs ? 'Medidor de nivel — MADES Paraguay' : 'River level gauge — MADES Paraguay' },
-      ],
-    },
     firms: {
       description: isEs
         ? 'Detecciones de incendio en tiempo cuasi real del sensor VIIRS de NASA a bordo del Suomi-NPP. Cada punto marca un píxel de 375 m con una anomalía térmica confirmada consistente con fuego activo. Los datos se actualizan aproximadamente cada 3 horas.'
@@ -312,7 +304,6 @@ const GROUPS = {
     layerPumps: 'Illegal Pump Sites',
     layerGauges: 'River Gauges',
     layerIna: 'INA Stations',
-    layerMades: 'MADES Paraguay',
     layerFire: 'Active Fire Alerts',
     layerCommunity: 'Community',
     riverTitle: 'Bermejo River',
@@ -351,7 +342,6 @@ const GROUPS = {
     layerPumps: 'Sitios de Bombeo Ilegal',
     layerGauges: 'Estaciones de Caudal',
     layerIna: 'Estaciones INA',
-    layerMades: 'MADES Paraguay',
     layerFire: 'Alertas de Incendio Activo',
     layerCommunity: 'Comunidad',
     riverTitle: 'Río Bermejo',
@@ -520,7 +510,6 @@ export default function Sidebar({ layers, setLayers, mapbiomas, setMapbiomas, se
             <span className={styles.groupSub}>{g.inaSub}</span>
           </div>
           <GswLayerRow layer={{ id: 'inaStations',    label: g.layerIna,   color: '#4db8ff' }} active={layers.inaStations}    onToggle={toggleLayer} layerInfo={layerInfo} descBtn={g.descBtn} />
-          <GswLayerRow layer={{ id: 'madesStations', label: g.layerMades, color: '#10b981' }} active={layers.madesStations} onToggle={toggleLayer} layerInfo={layerInfo} descBtn={g.descBtn} />
         </div>
 
         {/* 7 — Fire Monitoring */}

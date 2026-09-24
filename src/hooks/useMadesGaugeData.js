@@ -31,11 +31,14 @@ async function fetchStation(s) {
   const from = daysAgo(7);
   const to   = today();
 
-  // Attempt 1 — try a few plausible MADES REST endpoint patterns
+  // siteId = internal integer ID from siaguapy.mades.gov.py/historico-datos/{siteId}/{slug}
+  // TODO: confirm exact endpoint by inspecting Network tab (XHR/Fetch) on that page
+  const id = s.siteId;
   const candidates = [
-    `${MADES_BASE}/api/hidrometria/nivel?codigoEstacion=${s.codigo}&fechaInicio=${from}&fechaFin=${to}`,
-    `${MADES_BASE}/api/estaciones/${s.codigo}/datos?variable=nivel&desde=${from}&hasta=${to}`,
-    `${MADES_BASE}/datos/nivel?estacion=${s.codigo}&desde=${from}&hasta=${to}&formato=json`,
+    `${MADES_BASE}/api/estaciones/${id}/datos?desde=${from}&hasta=${to}`,
+    `${MADES_BASE}/api/datos-historicos/${id}?fechaInicio=${from}&fechaFin=${to}`,
+    `${MADES_BASE}/api/nivel?estacion=${id}&desde=${from}&hasta=${to}`,
+    `${MADES_BASE}/api/historico/${id}?desde=${from}&hasta=${to}`,
   ];
 
   for (const url of candidates) {

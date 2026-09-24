@@ -14,7 +14,7 @@ export const MADES_STATIONS = [
   // ── Pilcomayo ───────────────────────────────────────────────────────────
   {
     id: 'mades-villa-montes',
-    codigo: '307',
+    siteId: 45,
     name: 'Pilcomayo – Villa Montes',
     river: 'Pilcomayo',
     country: 'BO',
@@ -23,7 +23,7 @@ export const MADES_STATIONS = [
   },
   {
     id: 'mades-mision-la-paz',
-    codigo: '310',
+    siteId: 44,
     name: 'Pilcomayo – Misión La Paz CTN',
     river: 'Pilcomayo',
     country: 'AR',
@@ -32,7 +32,7 @@ export const MADES_STATIONS = [
   },
   {
     id: 'mades-pozo-hondo',
-    codigo: '2000086067',
+    siteId: 29,
     name: 'Pilcomayo – Pozo Hondo',
     river: 'Pilcomayo',
     country: 'AR',
@@ -43,7 +43,7 @@ export const MADES_STATIONS = [
   // ── Río Paraguay ────────────────────────────────────────────────────────
   {
     id: 'mades-puerto-ladario',
-    codigo: '2000082001',
+    siteId: 1,
     name: 'Paraguay – Puerto Ladario',
     river: 'Paraguay',
     country: 'BR',
@@ -52,7 +52,7 @@ export const MADES_STATIONS = [
   },
   {
     id: 'mades-bahia-negra',
-    codigo: '2000086033',
+    siteId: 6,
     name: 'Paraguay – Bahía Negra',
     river: 'Paraguay',
     country: 'PY',
@@ -61,7 +61,7 @@ export const MADES_STATIONS = [
   },
   {
     id: 'mades-fuerte-olimpo',
-    codigo: '2000086010',
+    siteId: 5,
     name: 'Paraguay – Fuerte Olimpo',
     river: 'Paraguay',
     country: 'PY',
@@ -70,7 +70,7 @@ export const MADES_STATIONS = [
   },
   {
     id: 'mades-isla-margarita',
-    codigo: '2000086009',
+    siteId: 4,
     name: 'Paraguay – Isla Margarita',
     river: 'Paraguay',
     country: 'PY',
@@ -79,7 +79,7 @@ export const MADES_STATIONS = [
   },
   {
     id: 'mades-vallemi',
-    codigo: '2000086088',
+    siteId: 7,
     name: 'Paraguay – Vallemí',
     river: 'Paraguay',
     country: 'PY',
@@ -88,7 +88,7 @@ export const MADES_STATIONS = [
   },
   {
     id: 'mades-concepcion',
-    codigo: '2000086134',
+    siteId: 8,
     name: 'Paraguay – Concepción',
     river: 'Paraguay',
     country: 'PY',
@@ -97,7 +97,7 @@ export const MADES_STATIONS = [
   },
   {
     id: 'mades-puerto-antequera',
-    codigo: '2000086184',
+    siteId: 10,
     name: 'Paraguay – Puerto Antequera',
     river: 'Paraguay',
     country: 'PY',
@@ -106,7 +106,7 @@ export const MADES_STATIONS = [
   },
   {
     id: 'mades-rosario',
-    codigo: '2000086183',
+    siteId: 9,
     name: 'Paraguay – Rosario',
     river: 'Paraguay',
     country: 'PY',
@@ -115,7 +115,7 @@ export const MADES_STATIONS = [
   },
   {
     id: 'mades-villeta',
-    codigo: '2000086211',
+    siteId: 11,
     name: 'Paraguay – Villeta',
     river: 'Paraguay',
     country: 'PY',
@@ -126,7 +126,7 @@ export const MADES_STATIONS = [
   // ── Paraná ──────────────────────────────────────────────────────────────
   {
     id: 'mades-salto-guaira',
-    codigo: '2000086210',
+    siteId: 18,
     name: 'Paraná – Salto del Guairá',
     river: 'Paraná',
     country: 'PY',
@@ -135,7 +135,7 @@ export const MADES_STATIONS = [
   },
   {
     id: 'mades-ciudad-del-este',
-    codigo: '2000086248',
+    siteId: 19,
     name: 'Paraná – Ciudad del Este',
     river: 'Paraná',
     country: 'PY',

@@ -28,7 +28,6 @@ const DEFAULT_LAYERS = {
   gsw_transitions: false,
   floodGauges: false,
   inaStations: false,
-  madesStations: false,
   community: false,
 };
 
